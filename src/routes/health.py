@@ -10,4 +10,3 @@ def health_check():
         'service': 'EezLegal API',
         'version': '1.0.0'
     }), 200
-

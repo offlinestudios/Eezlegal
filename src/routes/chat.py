@@ -1,139 +1,79 @@
 import os
+import json
 from flask import Blueprint, request, jsonify, Response, stream_with_context
 from openai import OpenAI
-import json
 
 chat_bp = Blueprint('chat', __name__)
 
-# Initialize OpenAI client with modern v1+ SDK
-client = OpenAI(
-    api_key=os.environ.get('OPENAI_API_KEY')
-)
+# Initialize OpenAI client if key provided
+_OPENAI_KEY = os.environ.get('OPENAI_API_KEY')
+_client = OpenAI(api_key=_OPENAI_KEY) if _OPENAI_KEY else None
 
-# Legal mode prompts
-LEGAL_PROMPTS = {
-    'plain-english': """You are a legal assistant specializing in translating complex legal documents into plain English. 
-    Your role is to help users understand legal jargon, contracts, and documents by explaining them in simple, clear language. 
-    Always maintain accuracy while making legal concepts accessible to non-lawyers.""",
-    
-    'document-generator': """You are a legal document generator assistant. You help users create professional legal documents 
-    such as contracts, agreements, letters, and forms. Provide templates and guidance while ensuring users understand 
-    the importance of legal review for their specific situations.""",
-    
-    'dispute-resolution': """You are a dispute resolution specialist. You help users understand their rights, 
-    analyze disputes, and provide guidance on recovery options. Focus on practical steps and legal remedies 
-    while emphasizing the importance of proper legal counsel for complex matters.""",
-    
-    'deal-advisor': """You are a deal advisor specializing in business negotiations and transactions. 
-    You provide strategic advice on deals, contracts, and negotiations to help users achieve favorable outcomes. 
-    Focus on practical negotiation tactics and legal considerations."""
-}
+SYSTEM_DEFAULT = "You are a concise legal assistant. Explain things plainly and avoid legalese."
+
+def _chat(messages, stream: bool = False):
+    if not _client:
+        # Fallback when no key provided
+        content = "OpenAI API key not configured. Echo: " + (messages[-1].get('content') or '')
+        return {'role': 'assistant', 'content': content}
+
+    kwargs = {
+        "model": os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),
+        "messages": messages,
+    }
+    if stream:
+        return _client.chat.completions.create(stream=True, **kwargs)
+    return _client.chat.completions.create(**kwargs)
 
 @chat_bp.route('/chat', methods=['POST'])
 def chat():
+    payload = request.get_json(silent=True) or {}
+    user_msg = (payload.get('message') or '').strip()
+    if not user_msg:
+        return jsonify({'error': 'message is required'}), 400
+
+    messages = [{"role": "system", "content": SYSTEM_DEFAULT},
+                {"role": "user", "content": user_msg}]
+
+    if not _client:
+        resp = _chat(messages)
+        return jsonify({'message': resp['content']})
+
     try:
-        data = request.get_json()
-        
-        if not data or 'message' not in data:
-            return jsonify({'error': 'Message is required'}), 400
-        
-        user_message = data['message']
-        mode = data.get('mode', 'general')
-        
-        # Get the appropriate system prompt based on mode
-        system_prompt = LEGAL_PROMPTS.get(mode, 
-            "You are EezLegal, a helpful AI legal assistant. Provide accurate legal information while emphasizing that users should consult with qualified attorneys for specific legal advice.")
-        
-        # Create messages array for the chat
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
-        ]
-        
-        # Add conversation history if provided
-        if 'history' in data and data['history']:
-            # Insert history before the current message
-            messages = [{"role": "system", "content": system_prompt}] + data['history'] + [{"role": "user", "content": user_message}]
-        
-        # Use the modern OpenAI v1+ SDK
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Using the safe default model
-            messages=messages,
-            max_tokens=1000,
-            temperature=0.7,
-            stream=False
-        )
-        
-        # Extract the response content
-        ai_response = response.choices[0].message.content
-        
-        return jsonify({
-            'response': ai_response,
-            'mode': mode
-        })
-        
+        resp = _chat(messages, stream=False)
+        return jsonify({'message': resp.choices[0].message.content})
     except Exception as e:
-        print(f"Error in chat endpoint: {str(e)}")
-        return jsonify({'error': 'An error occurred while processing your request'}), 500
+        print(f"[chat] error: {e}")
+        return jsonify({'error': 'chat failed'}), 500
 
 @chat_bp.route('/chat/stream', methods=['POST'])
 def chat_stream():
-    """Streaming chat endpoint for real-time responses"""
-    try:
-        data = request.get_json()
-        
-        if not data or 'message' not in data:
-            return jsonify({'error': 'Message is required'}), 400
-        
-        user_message = data['message']
-        mode = data.get('mode', 'general')
-        
-        # Get the appropriate system prompt based on mode
-        system_prompt = LEGAL_PROMPTS.get(mode, 
-            "You are EezLegal, a helpful AI legal assistant. Provide accurate legal information while emphasizing that users should consult with qualified attorneys for specific legal advice.")
-        
-        # Create messages array for the chat
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
-        ]
-        
-        # Add conversation history if provided
-        if 'history' in data and data['history']:
-            messages = [{"role": "system", "content": system_prompt}] + data['history'] + [{"role": "user", "content": user_message}]
-        
-        def generate():
-            try:
-                # Use streaming with the modern OpenAI v1+ SDK
-                stream = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=messages,
-                    max_tokens=1000,
-                    temperature=0.7,
-                    stream=True
-                )
-                
-                for chunk in stream:
-                    if chunk.choices[0].delta.content is not None:
-                        content = chunk.choices[0].delta.content
-                        yield f"data: {json.dumps({'content': content})}\n\n"
-                
-                yield f"data: {json.dumps({'done': True})}\n\n"
-                
-            except Exception as e:
-                yield f"data: {json.dumps({'error': str(e)})}\n\n"
-        
-        return Response(
-            stream_with_context(generate()),
-            mimetype='text/event-stream',
-            headers={
-                'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive',
-                'Access-Control-Allow-Origin': '*'
-            }
-        )
-        
-    except Exception as e:
-        print(f"Error in streaming chat endpoint: {str(e)}")
-        return jsonify({'error': 'An error occurred while processing your request'}), 500
+    payload = request.get_json(silent=True) or {}
+    user_msg = (payload.get('message') or '').strip()
+    if not user_msg:
+        return jsonify({'error': 'message is required'}), 400
 
+    messages = [{"role": "system", "content": SYSTEM_DEFAULT},
+                {"role": "user", "content": user_msg}]
+
+    if not _client:
+        # simple non-stream fallback
+        resp = _chat(messages)
+        def gen():
+            yield f"data: {json.dumps({'delta': resp['content']})}\n\n"
+            yield "data: [DONE]\n\n"
+        return Response(stream_with_context(gen()), mimetype='text/event-stream')
+
+    def generate():
+        try:
+            stream = _chat(messages, stream=True)
+            for chunk in stream:
+                delta = chunk.choices[0].delta.content or ""
+                if delta:
+                    yield f"data: {json.dumps({'delta': delta})}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            print(f"[chat/stream] error: {e}")
+            yield f"data: {json.dumps({'error': 'stream failed'})}\n\n"
+
+    return Response(stream_with_context(generate()), mimetype='text/event-stream')
