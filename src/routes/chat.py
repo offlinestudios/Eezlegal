@@ -5,9 +5,10 @@ import json
 
 chat_bp = Blueprint('chat', __name__)
 
-# Initialize OpenAI client with modern v1+ SDK
+# Initialize OpenAI client with standard OpenAI API
 client = OpenAI(
-    api_key=os.environ.get('OPENAI_API_KEY')
+    api_key=os.environ.get('OPENAI_API_KEY'),
+    base_url="https://api.openai.com/v1"  # Use standard OpenAI API
 )
 
 # Legal mode prompts
@@ -40,6 +41,15 @@ def chat():
         user_message = data['message']
         mode = data.get('mode', 'general')
         
+        # Check if API key is available
+        api_key = os.environ.get('OPENAI_API_KEY')
+        if not api_key:
+            print("ERROR: OPENAI_API_KEY not found in environment variables")
+            return jsonify({'error': 'OpenAI API key not configured'}), 500
+        
+        print(f"API Key present: {bool(api_key)}")
+        print(f"API Key starts with: {api_key[:10] if api_key else 'None'}...")
+        
         # Get the appropriate system prompt based on mode
         system_prompt = LEGAL_PROMPTS.get(mode, 
             "You are EezLegal, a helpful AI legal assistant. Provide accurate legal information while emphasizing that users should consult with qualified attorneys for specific legal advice.")
@@ -55,9 +65,11 @@ def chat():
             # Insert history before the current message
             messages = [{"role": "system", "content": system_prompt}] + data['history'] + [{"role": "user", "content": user_message}]
         
-        # Use the modern OpenAI v1+ SDK with supported model
+        print(f"Making OpenAI API call with model: gpt-3.5-turbo")
+        
+        # Use the modern OpenAI v1+ SDK with standard OpenAI model
         response = client.chat.completions.create(
-            model="gpt-4.1-mini",  # Using supported model
+            model="gpt-3.5-turbo",  # Using standard OpenAI model
             messages=messages,
             max_tokens=1000,
             temperature=0.7,
@@ -67,14 +79,26 @@ def chat():
         # Extract the response content
         ai_response = response.choices[0].message.content
         
+        print(f"OpenAI API call successful, response length: {len(ai_response)}")
+        
         return jsonify({
             'response': ai_response,
             'mode': mode
         })
         
     except Exception as e:
-        print(f"Error in chat endpoint: {str(e)}")
-        return jsonify({'error': 'An error occurred while processing your request'}), 500
+        error_msg = str(e)
+        print(f"Error in chat endpoint: {error_msg}")
+        
+        # Provide more specific error messages
+        if "api_key" in error_msg.lower():
+            return jsonify({'error': 'Invalid OpenAI API key'}), 500
+        elif "quota" in error_msg.lower():
+            return jsonify({'error': 'OpenAI API quota exceeded'}), 500
+        elif "model" in error_msg.lower():
+            return jsonify({'error': 'Model not available'}), 500
+        else:
+            return jsonify({'error': f'API Error: {error_msg}'}), 500
 
 @chat_bp.route('/chat/stream', methods=['POST'])
 def chat_stream():
@@ -104,9 +128,9 @@ def chat_stream():
         
         def generate():
             try:
-                # Use streaming with the modern OpenAI v1+ SDK with supported model
+                # Use streaming with the modern OpenAI v1+ SDK with standard OpenAI model
                 stream = client.chat.completions.create(
-                    model="gpt-4.1-mini",  # Using supported model
+                    model="gpt-3.5-turbo",  # Using standard OpenAI model
                     messages=messages,
                     max_tokens=1000,
                     temperature=0.7,
