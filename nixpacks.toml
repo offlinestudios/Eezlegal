@@ -1,9 +1,0 @@
-# Force Python detection and explicit build/start commands
-[phases.setup]
-nixPkgs = ["python311"]
-
-[phases.install]
-cmds = ["pip install -r requirements.txt"]
-
-[start]
-cmd = "python eezlegal-backend/src/main.py"
