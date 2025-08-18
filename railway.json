@@ -1,1 +1,0 @@
-{"deploy":{"startCommand":"python eezlegal-backend/src/main.py"},"healthcheckPath":"/api/health"}
