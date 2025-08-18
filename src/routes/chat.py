@@ -57,7 +57,6 @@ def chat_stream():
                 {"role": "user", "content": user_msg}]
 
     if not _client:
-        # simple non-stream fallback
         resp = _chat(messages)
         def gen():
             yield f"data: {json.dumps({'delta': resp['content']})}\n\n"

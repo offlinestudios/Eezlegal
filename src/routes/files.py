@@ -1,5 +1,4 @@
 import os
-import tempfile
 import io
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
@@ -27,11 +26,14 @@ def upload_file():
         return jsonify({'error': 'Unsupported file type'}), 400
 
     # Simple size check if available
-    file.stream.seek(0, os.SEEK_END)
-    size = file.stream.tell()
-    file.stream.seek(0)
-    if size > MAX_FILE_SIZE:
-        return jsonify({'error': 'File too large'}), 400
+    try:
+        file.stream.seek(0, os.SEEK_END)
+        size = file.stream.tell()
+        file.stream.seek(0)
+        if size > MAX_FILE_SIZE:
+            return jsonify({'error': 'File too large'}), 400
+    except Exception:
+        pass
 
     filename = secure_filename(file.filename)
 
@@ -42,11 +44,11 @@ def upload_file():
             content = file.read().decode('utf-8', errors='replace')
         elif ext == 'pdf':
             reader = PyPDF2.PdfReader(file)
-            content = '\n'.join(page.extract_text() or '' for page in reader.pages)
+            content = '\\n'.join(page.extract_text() or '' for page in reader.pages)
         elif ext in ('doc', 'docx'):
             data = file.read()
             doc = Document(io.BytesIO(data))
-            content = '\n'.join(p.text for p in doc.paragraphs)
+            content = '\\n'.join(p.text for p in doc.paragraphs)
         else:
             content = ''
 
@@ -63,7 +65,6 @@ def upload_file():
 def analyze_file():
     data = request.get_json(silent=True) or {}
     analysis_type = data.get('type', 'general')
-    # Placeholder response; real integration would connect to /chat
     return jsonify({
         'success': True,
         'analysis_type': analysis_type,

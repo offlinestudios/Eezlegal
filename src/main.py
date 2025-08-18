@@ -1,11 +1,10 @@
 import os
 import sys
+from flask import Flask, send_from_directory
+from flask_cors import CORS
 
 # Ensure 'src' is importable
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-
-from flask import Flask, send_from_directory
-from flask_cors import CORS
 
 from src.models.user import db
 from src.routes.user import user_bp
@@ -13,7 +12,6 @@ from src.routes.chat import chat_bp
 from src.routes.files import files_bp
 from src.routes.health import health_bp
 
-# App + static
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-me")
 
@@ -22,10 +20,8 @@ db_url = os.environ.get("DATABASE_URL") or "sqlite:////tmp/eezlegal.db"
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# CORS for all routes
 CORS(app, origins="*")
 
-# Initialize DB
 with app.app_context():
     db.init_app(app)
     try:
@@ -33,13 +29,11 @@ with app.app_context():
     except Exception as e:
         print(f"[boot] WARNING: failed to create tables: {e}")
 
-# Register blueprints
 app.register_blueprint(user_bp, url_prefix="/api")
 app.register_blueprint(chat_bp, url_prefix="/api")
 app.register_blueprint(files_bp, url_prefix="/api")
 app.register_blueprint(health_bp, url_prefix="/api")
 
-# Static file serving (optional)
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve(path: str):
@@ -54,7 +48,6 @@ def serve(path: str):
     if os.path.exists(index_path):
         return send_from_directory(static_folder_path, "index.html")
     return "index.html not found", 404
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
