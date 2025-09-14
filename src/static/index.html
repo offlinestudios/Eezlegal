@@ -9,13 +9,12 @@
 <body>
     <header class="header">
         <div class="header-left">
-            <span class="header-title hidden" id="headerTitle">eezlegal</span>
             <span class="user-counter" id="userCounter">1,000,565 users</span>
         </div>
         <div class="header-right">
             <div class="auth-buttons">
-                <button>Log in</button>
-                <button>Sign up for free</button>
+                <a href="/login">Log in</a>
+                <a href="/signup">Sign up for free</a>
             </div>
             <button class="help-btn" aria-label="Help">?</button>
         </div>
@@ -36,24 +35,49 @@
                         id="messageInput" 
                         placeholder="Tell us your legal problem..."
                         rows="1"
+                        readonly
                     ></textarea>
-                    <button class="voice-button" id="voiceButton">
+                    <button class="voice-button" id="voiceButton" disabled>
                         <span>🎙</span>
                         <span>Voice</span>
                     </button>
                 </div>
                 
                 <div class="upload-section">
-                    <button class="upload-button">
+                    <button class="upload-button" disabled>
                         <span>📎</span>
                         <span>Upload</span>
                     </button>
                 </div>
             </div>
+            
+            <div class="login-prompt">
+                <p>Please <a href="/login">log in</a> or <a href="/signup">sign up</a> to start using EezLegal</p>
+            </div>
         </div>
     </main>
 
-    <script src="app.js"></script>
+    <script>
+        // Dynamic user counter - increases every 15 seconds
+        let userCount = 1000565;
+        const userCounter = document.getElementById('userCounter');
+        
+        function updateUserCounter() {
+            userCount += Math.floor(Math.random() * 3) + 1;
+            userCounter.textContent = `${userCount.toLocaleString()} users`;
+        }
+        
+        setInterval(updateUserCounter, 15000);
+        
+        // Disable composer for non-logged in users
+        document.getElementById('messageInput').addEventListener('click', function() {
+            window.location.href = '/login';
+        });
+        
+        document.getElementById('voiceButton').addEventListener('click', function() {
+            window.location.href = '/login';
+        });
+    </script>
 </body>
 </html>
 
