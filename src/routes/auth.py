@@ -1,9 +1,31 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from src.models.user import User
 import re
+import os
+from authlib.integrations.flask_client import OAuth
+import requests
 
 auth = Blueprint('auth', __name__)
+
+# Initialize OAuth
+oauth = OAuth()
+
+def init_oauth(app):
+    """Initialize OAuth with the Flask app"""
+    oauth.init_app(app)
+    
+    # Configure Google OAuth
+    google = oauth.register(
+        name='google',
+        client_id=os.getenv('GOOGLE_CLIENT_ID'),
+        client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+        server_metadata_url='https://accounts.google.com/.well-known/openid_configuration',
+        client_kwargs={
+            'scope': 'openid email profile'
+        }
+    )
+    return google
 
 def is_valid_email(email):
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
@@ -29,18 +51,11 @@ def login():
         if user and check_password_hash(user.password_hash, password):
             # Login successful
             session['user_id'] = user.id
-            session['user_name'] = user.name
             session['user_email'] = user.email
-            
-            # Redirect to dashboard or intended page
-            next_page = request.args.get('next')
-            return redirect(next_page or url_for('main.dashboard'))
+            session['user_name'] = user.name
+            return redirect(url_for('auth.dashboard'))
         else:
             return render_template('login.html', error='Invalid email or password')
-    
-    # If user is already logged in, redirect to dashboard
-    if 'user_id' in session:
-        return redirect(url_for('main.dashboard'))
     
     return render_template('login.html')
 
@@ -70,41 +85,85 @@ def signup():
             return render_template('signup.html', error='An account with this email already exists')
         
         # Create new user
-        try:
-            password_hash = generate_password_hash(password)
-            user = User.create(name=name, email=email, password_hash=password_hash)
-            
-            # Login the user
+        password_hash = generate_password_hash(password)
+        user = User.create(name=name, email=email, password_hash=password_hash)
+        
+        if user:
+            # Auto-login after successful signup
             session['user_id'] = user.id
-            session['user_name'] = user.name
             session['user_email'] = user.email
-            
-            flash('Account created successfully!', 'success')
-            return redirect(url_for('main.dashboard'))
-            
-        except Exception as e:
-            return render_template('signup.html', error='An error occurred while creating your account')
-    
-    # If user is already logged in, redirect to dashboard
-    if 'user_id' in session:
-        return redirect(url_for('main.dashboard'))
+            session['user_name'] = user.name
+            return redirect(url_for('auth.dashboard'))
+        else:
+            return render_template('signup.html', error='Failed to create account. Please try again.')
     
     return render_template('signup.html')
+
+@auth.route('/auth/google')
+def google_auth():
+    """Initiate Google OAuth"""
+    google = oauth.google
+    redirect_uri = url_for('auth.google_callback', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@auth.route('/auth/google/callback')
+def google_callback():
+    """Handle Google OAuth callback"""
+    try:
+        google = oauth.google
+        token = google.authorize_access_token()
+        user_info = token.get('userinfo')
+        
+        if user_info:
+            email = user_info.get('email')
+            name = user_info.get('name')
+            
+            if not email:
+                flash('Failed to get email from Google account', 'error')
+                return redirect(url_for('auth.login'))
+            
+            # Check if user exists
+            user = User.get_by_email(email)
+            
+            if not user:
+                # Create new user with Google account
+                user = User.create(
+                    name=name or email.split('@')[0],
+                    email=email,
+                    password_hash=None,  # No password for OAuth users
+                    oauth_provider='google',
+                    oauth_id=user_info.get('sub')
+                )
+            
+            if user:
+                # Login the user
+                session['user_id'] = user.id
+                session['user_email'] = user.email
+                session['user_name'] = user.name
+                return redirect(url_for('auth.dashboard'))
+            else:
+                flash('Failed to create account', 'error')
+                return redirect(url_for('auth.login'))
+        else:
+            flash('Failed to get user information from Google', 'error')
+            return redirect(url_for('auth.login'))
+            
+    except Exception as e:
+        print(f"Google OAuth error: {e}")
+        flash('Authentication failed', 'error')
+        return redirect(url_for('auth.login'))
+
+@auth.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    
+    return render_template('dashboard.html', 
+                         user_name=session.get('user_name'),
+                         user_email=session.get('user_email'))
 
 @auth.route('/logout')
 def logout():
     session.clear()
-    flash('You have been logged out successfully', 'info')
-    return redirect(url_for('main.index'))
-
-def login_required(f):
-    """Decorator to require login for routes"""
-    from functools import wraps
-    
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(url_for('auth.login', next=request.url))
-        return f(*args, **kwargs)
-    return decorated_function
+    return redirect(url_for('auth.login'))
 

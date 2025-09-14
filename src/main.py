@@ -1,5 +1,10 @@
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -8,22 +13,30 @@ from flask_cors import CORS
 from src.models.user import db
 from src.routes.user import user_bp
 from src.routes.simple_chat import simple_chat_bp
-from src.routes.auth import auth
+from src.routes.auth import auth, init_oauth
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
-app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'asdf#FGSgvasgf$5$WGT')
+
+# Google OAuth Configuration
+app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
+app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_CLIENT_SECRET')
 
 # Enable CORS for all routes
 CORS(app)
+
+# Initialize OAuth
+google = init_oauth(app)
 
 app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(simple_chat_bp, url_prefix='/api')
 app.register_blueprint(auth)
 
-# uncomment if you need to use database
+# Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
+
 with app.app_context():
     db.create_all()
 
@@ -47,3 +60,4 @@ def serve(path):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+
