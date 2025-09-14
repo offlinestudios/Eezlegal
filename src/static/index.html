@@ -4,19 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EezLegal - Your AI Legal Assistant</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <header class="header">
         <div class="header-left">
-            <span class="user-counter" id="userCounter">1,000,565 users</span>
+            <span class="header-title hidden" id="headerTitle">eezlegal</span>
         </div>
         <div class="header-right">
             <div class="auth-buttons">
                 <a href="/login">Log in</a>
                 <a href="/signup">Sign up for free</a>
             </div>
-            <button class="help-btn" aria-label="Help">?</button>
+            <button class="help-btn" aria-label="Help">
+                <i class="fas fa-question"></i>
+            </button>
         </div>
     </header>
 
@@ -35,49 +39,24 @@
                         id="messageInput" 
                         placeholder="Tell us your legal problem..."
                         rows="1"
-                        readonly
                     ></textarea>
-                    <button class="voice-button" id="voiceButton" disabled>
-                        <span>🎙</span>
+                    <button class="voice-button" id="voiceButton">
+                        <i class="fas fa-microphone"></i>
                         <span>Voice</span>
                     </button>
                 </div>
                 
                 <div class="upload-section">
-                    <button class="upload-button" disabled>
-                        <span>📎</span>
+                    <button class="upload-button">
+                        <i class="fas fa-paperclip"></i>
                         <span>Upload</span>
                     </button>
                 </div>
             </div>
-            
-            <div class="login-prompt">
-                <p>Please <a href="/login">log in</a> or <a href="/signup">sign up</a> to start using EezLegal</p>
-            </div>
         </div>
     </main>
 
-    <script>
-        // Dynamic user counter - increases every 15 seconds
-        let userCount = 1000565;
-        const userCounter = document.getElementById('userCounter');
-        
-        function updateUserCounter() {
-            userCount += Math.floor(Math.random() * 3) + 1;
-            userCounter.textContent = `${userCount.toLocaleString()} users`;
-        }
-        
-        setInterval(updateUserCounter, 15000);
-        
-        // Disable composer for non-logged in users
-        document.getElementById('messageInput').addEventListener('click', function() {
-            window.location.href = '/login';
-        });
-        
-        document.getElementById('voiceButton').addEventListener('click', function() {
-            window.location.href = '/login';
-        });
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
 

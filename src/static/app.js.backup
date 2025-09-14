@@ -2,11 +2,23 @@ document.addEventListener('DOMContentLoaded', function() {
   const messageInput = document.getElementById('messageInput');
   const voiceButton = document.getElementById('voiceButton');
   const chat = document.getElementById('chat');
+  const userCounter = document.getElementById('userCounter');
   const welcomeSection = document.getElementById('welcomeSection');
   const headerTitle = document.getElementById('headerTitle');
   
   let chatHistory = [];
   let isFirstMessage = true;
+
+  // Dynamic user counter - increases every 15 seconds
+  let userCount = 1000565;
+  
+  function updateUserCounter() {
+    userCount += Math.floor(Math.random() * 3) + 1; // Add 1-3 users randomly
+    userCounter.textContent = `${userCount.toLocaleString()} users`;
+  }
+  
+  // Update counter every 15 seconds
+  setInterval(updateUserCounter, 15000);
 
   // Voice/Send button toggle
   function toggleButtons() {
@@ -16,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
       voiceButton.innerHTML = '<span>Send</span>';
       voiceButton.className = 'send-button';
     } else {
-      voiceButton.innerHTML = '<i class="fas fa-microphone"></i><span>Voice</span>';
+      voiceButton.innerHTML = '<span>🎙</span><span>Voice</span>';
       voiceButton.className = 'voice-button';
     }
   }
