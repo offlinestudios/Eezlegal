@@ -9,11 +9,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- Header with logo -->
+    <header class="auth-header">
+        <div class="auth-logo">
+            <span>eezlegal</span>
+        </div>
+    </header>
+
     <div class="auth-container">
         <div class="auth-card">
-            <div class="auth-header">
-                <h1>Welcome back</h1>
-                <p>Log in to your EezLegal account</p>
+            <div class="auth-header-content">
+                <h1>Log in or sign up</h1>
+                <p>You'll get smarter responses and can upload files, images, and more.</p>
             </div>
 
             {% if error %}
@@ -22,34 +29,72 @@
             </div>
             {% endif %}
 
-            <form method="POST" class="auth-form">
+            <!-- Email-only form initially -->
+            <form method="POST" class="auth-form" id="loginForm">
                 <div class="form-group">
-                    <label for="email">Email address</label>
-                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    <input type="email" id="email" name="email" placeholder="Email address" required>
                 </div>
 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                <!-- Password field (hidden initially, shown after email) -->
+                <div class="form-group" id="passwordGroup" style="display: none;">
+                    <input type="password" id="password" name="password" placeholder="Password">
                 </div>
 
-                <button type="submit" class="auth-button primary">Log in</button>
+                <button type="submit" class="auth-button primary">Continue</button>
             </form>
 
             <div class="auth-divider">
-                <span>or</span>
+                <span>OR</span>
             </div>
 
-            <a href="{{ url_for('auth.google_auth') }}" class="auth-button google">
-                <i class="fab fa-google"></i>
-                Continue with Google
-            </a>
+            <!-- OAuth buttons matching ChatGPT -->
+            <div class="oauth-buttons">
+                <a href="{{ url_for('auth.google_auth') }}" class="oauth-button">
+                    <i class="fab fa-google"></i>
+                    <span>Continue with Google</span>
+                </a>
+
+                <button class="oauth-button" disabled>
+                    <i class="fab fa-microsoft"></i>
+                    <span>Continue with Microsoft Account</span>
+                </button>
+
+                <button class="oauth-button" disabled>
+                    <i class="fab fa-apple"></i>
+                    <span>Continue with Apple</span>
+                </button>
+
+                <button class="oauth-button" disabled>
+                    <i class="fas fa-phone"></i>
+                    <span>Continue with phone</span>
+                </button>
+            </div>
 
             <div class="auth-footer">
-                <p>Don't have an account? <a href="{{ url_for('auth.signup') }}">Sign up</a></p>
+                <a href="#">Terms of Use</a>
+                <span>|</span>
+                <a href="#">Privacy Policy</a>
             </div>
         </div>
     </div>
+
+    <script>
+        // Simple email/password flow like ChatGPT
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const email = document.getElementById('email').value;
+            const passwordGroup = document.getElementById('passwordGroup');
+            const password = document.getElementById('password').value;
+            
+            if (!password && email) {
+                // First step: show password field
+                e.preventDefault();
+                passwordGroup.style.display = 'block';
+                document.getElementById('password').focus();
+                document.getElementById('password').required = true;
+            }
+            // Second step: submit form with email and password
+        });
+    </script>
 </body>
 </html>
 

@@ -40,14 +40,25 @@ def login():
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
         
-        if not email or not password:
-            return render_template('login.html', error='Please fill in all fields')
+        if not email:
+            return render_template('login.html', error='Please enter your email address')
         
         if not is_valid_email(email):
             return render_template('login.html', error='Please enter a valid email address')
         
-        # Check if user exists and password is correct
+        # Check if user exists
         user = User.get_by_email(email)
+        
+        if not password:
+            # First step: email provided, check if user exists
+            if user:
+                # User exists, they need to provide password
+                return render_template('login.html', error='Please enter your password', email=email)
+            else:
+                # User doesn't exist, redirect to signup
+                return redirect(url_for('auth.signup') + f'?email={email}')
+        
+        # Second step: both email and password provided
         if user and check_password_hash(user.password_hash, password):
             # Login successful
             session['user_id'] = user.id
@@ -55,34 +66,46 @@ def login():
             session['user_name'] = user.name
             return redirect(url_for('auth.dashboard'))
         else:
-            return render_template('login.html', error='Invalid email or password')
+            return render_template('login.html', error='Invalid email or password', email=email)
     
     return render_template('login.html')
 
 @auth.route('/signup', methods=['GET', 'POST'])
 def signup():
+    # Get email from query parameter if redirected from login
+    prefilled_email = request.args.get('email', '')
+    
     if request.method == 'POST':
-        name = request.form.get('name', '').strip()
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
+        name = request.form.get('name', '').strip()
+        
+        # If name is empty, generate from email
+        if not name and email:
+            name = email.split('@')[0].replace('.', ' ').replace('_', ' ').title()
         
         # Validation
-        if not all([name, email, password, confirm_password]):
-            return render_template('signup.html', error='Please fill in all fields')
+        if not email:
+            return render_template('signup.html', error='Please enter your email address', email=prefilled_email)
         
         if not is_valid_email(email):
-            return render_template('signup.html', error='Please enter a valid email address')
-        
-        if not is_valid_password(password):
-            return render_template('signup.html', error='Password must be at least 8 characters long')
-        
-        if password != confirm_password:
-            return render_template('signup.html', error='Passwords do not match')
+            return render_template('signup.html', error='Please enter a valid email address', email=email)
         
         # Check if user already exists
         if User.get_by_email(email):
-            return render_template('signup.html', error='An account with this email already exists')
+            return render_template('signup.html', error='An account with this email already exists. Try logging in instead.', email=email)
+        
+        if not password:
+            # First step: email provided, show password fields
+            return render_template('signup.html', email=email, show_password=True)
+        
+        # Second step: validate passwords
+        if not is_valid_password(password):
+            return render_template('signup.html', error='Password must be at least 8 characters long', email=email, show_password=True)
+        
+        if password != confirm_password:
+            return render_template('signup.html', error='Passwords do not match', email=email, show_password=True)
         
         # Create new user
         password_hash = generate_password_hash(password)
@@ -95,9 +118,9 @@ def signup():
             session['user_name'] = user.name
             return redirect(url_for('auth.dashboard'))
         else:
-            return render_template('signup.html', error='Failed to create account. Please try again.')
+            return render_template('signup.html', error='Failed to create account. Please try again.', email=email, show_password=True)
     
-    return render_template('signup.html')
+    return render_template('signup.html', email=prefilled_email)
 
 @auth.route('/auth/google')
 def google_auth():

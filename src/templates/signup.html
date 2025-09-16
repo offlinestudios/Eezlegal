@@ -9,9 +9,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- Header with logo -->
+    <header class="auth-header">
+        <div class="auth-logo">
+            <span>eezlegal</span>
+        </div>
+    </header>
+
     <div class="auth-container">
         <div class="auth-card">
-            <div class="auth-header">
+            <div class="auth-header-content">
                 <h1>Create your account</h1>
                 <p>Get started with EezLegal today</p>
             </div>
@@ -22,44 +29,87 @@
             </div>
             {% endif %}
 
-            <form method="POST" class="auth-form">
+            <!-- Simplified signup form - email only initially -->
+            <form method="POST" class="auth-form" id="signupForm">
                 <div class="form-group">
-                    <label for="name">Full name</label>
-                    <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                    <input type="email" id="email" name="email" placeholder="Email address" required>
                 </div>
 
-                <div class="form-group">
-                    <label for="email">Email address</label>
-                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                <!-- Password fields (shown after email) -->
+                <div class="password-fields" id="passwordFields" style="display: none;">
+                    <div class="form-group">
+                        <input type="password" id="password" name="password" placeholder="Create a password">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password">
+                    </div>
+                    <!-- Hidden name field with default value -->
+                    <input type="hidden" id="name" name="name" value="">
                 </div>
 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Create a password" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="confirm_password">Confirm password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
-                </div>
-
-                <button type="submit" class="auth-button primary">Create account</button>
+                <button type="submit" class="auth-button primary">Continue</button>
             </form>
 
             <div class="auth-divider">
-                <span>or</span>
+                <span>OR</span>
             </div>
 
-            <a href="{{ url_for('auth.google_auth') }}" class="auth-button google">
-                <i class="fab fa-google"></i>
-                Continue with Google
-            </a>
+            <!-- OAuth buttons matching ChatGPT -->
+            <div class="oauth-buttons">
+                <a href="{{ url_for('auth.google_auth') }}" class="oauth-button">
+                    <i class="fab fa-google"></i>
+                    <span>Continue with Google</span>
+                </a>
+
+                <button class="oauth-button" disabled>
+                    <i class="fab fa-microsoft"></i>
+                    <span>Continue with Microsoft Account</span>
+                </button>
+
+                <button class="oauth-button" disabled>
+                    <i class="fab fa-apple"></i>
+                    <span>Continue with Apple</span>
+                </button>
+
+                <button class="oauth-button" disabled>
+                    <i class="fas fa-phone"></i>
+                    <span>Continue with phone</span>
+                </button>
+            </div>
 
             <div class="auth-footer">
                 <p>Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+                <div class="terms-links">
+                    <a href="#">Terms of Use</a>
+                    <span>|</span>
+                    <a href="#">Privacy Policy</a>
+                </div>
             </div>
         </div>
     </div>
+
+    <script>
+        // Progressive signup flow
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            const email = document.getElementById('email').value;
+            const passwordFields = document.getElementById('passwordFields');
+            const password = document.getElementById('password').value;
+            const nameField = document.getElementById('name');
+            
+            if (!password && email) {
+                // First step: show password fields
+                e.preventDefault();
+                passwordFields.style.display = 'block';
+                document.getElementById('password').focus();
+                document.getElementById('password').required = true;
+                document.getElementById('confirm_password').required = true;
+                
+                // Set name from email
+                nameField.value = email.split('@')[0];
+            }
+            // Second step: submit form with all data
+        });
+    </script>
 </body>
 </html>
 
