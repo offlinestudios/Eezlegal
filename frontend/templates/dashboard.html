@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - EezLegal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+    <!-- Fixed Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 class="header-title">EezLegal</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-menu">
+                    <span class="user-name">{{ user.name }}</span>
+                    <div class="user-dropdown">
+                        <button class="user-button">
+                            <span class="user-avatar">{{ user.name[0].upper() }}</span>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a href="{{ url_for('auth.logout') }}">Sign out</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Fixed Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; {{ current_year }} EezLegal. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Main Content Area -->
+    <div class="main-container">
+        <div class="dashboard-grid">
+            <!-- Left Sidebar: Chats -->
+            <aside class="sidebar-left">
+                <div class="sidebar-card">
+                    <div class="sidebar-header">
+                        <h2>Recent chats</h2>
+                        <button class="new-chat-btn">+ New chat</button>
+                    </div>
+                    <div class="chat-list">
+                        {% for chat in recent_chats %}
+                        <div class="chat-item {{ 'active' if chat.id == current_chat_id }}">
+                            <div class="chat-title">{{ chat.title }}</div>
+                            <div class="chat-date">{{ chat.created_at.strftime('%b %d') }}</div>
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <p>No chats yet</p>
+                            <p class="empty-subtitle">Start a conversation to see your chat history</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center: Main Chat Area -->
+            <main class="main-content">
+                <div class="chat-container">
+                    {% if current_chat_id %}
+                    <!-- Existing Chat -->
+                    <div class="chat-messages" id="chatMessages">
+                        {% for message in chat_messages %}
+                        <div class="message {{ message.role }}">
+                            <div class="message-content">{{ message.content }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <!-- Welcome State -->
+                    <div class="welcome-section">
+                        <h1 class="welcome-title">What can I help you with today?</h1>
+                        <div class="suggestion-chips">
+                            <button class="suggestion-chip">Contract review</button>
+                            <button class="suggestion-chip">Legal advice</button>
+                            <button class="suggestion-chip">Document drafting</button>
+                            <button class="suggestion-chip">Compliance questions</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Composer -->
+                    <div class="composer-section">
+                        <div class="composer">
+                            <textarea 
+                                class="composer-input" 
+                                id="messageInput" 
+                                placeholder="Tell us your legal problem..."
+                                rows="1"
+                            ></textarea>
+                            <button class="voice-button" id="voiceButton">
+                                <span>🎙</span>
+                                <span>Voice</span>
+                            </button>
+                        </div>
+                        
+                        <div class="composer-actions">
+                            <button class="upload-button">
+                                <span>📎</span>
+                                <span>Attach</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Sidebar: Tools -->
+            <aside class="sidebar-right">
+                <div class="sidebar-card">
+                    <div class="sidebar-header">
+                        <h2>Tools</h2>
+                    </div>
+                    <div class="tools-list">
+                        <button class="tool-item">
+                            <span class="tool-icon">📄</span>
+                            <span>Document templates</span>
+                        </button>
+                        <button class="tool-item">
+                            <span class="tool-icon">🔍</span>
+                            <span>Legal research</span>
+                        </button>
+                        <button class="tool-item">
+                            <span class="tool-icon">⚖️</span>
+                            <span>Case law search</span>
+                        </button>
+                        <button class="tool-item">
+                            <span class="tool-icon">📊</span>
+                            <span>Analytics</span>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>
+
