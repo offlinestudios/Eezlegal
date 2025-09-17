@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EezLegal - Your AI Legal Assistant</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="config.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <span class="header-title hidden" id="headerTitle">eezlegal</span>
+        </div>
+        <div class="header-right">
+            <div class="auth-buttons">
+                <a href="/login">Log in</a>
+                <a href="/signup">Sign up for free</a>
+            </div>
+            <button class="help-btn" aria-label="Help">
+                <i class="fas fa-question"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="chat-container">
+            <div class="welcome-section" id="welcomeSection">
+                <h1 class="title">eezlegal</h1>
+            </div>
+            
+            <div class="chat" id="chat"></div>
+            
+            <div class="composer-section">
+                <div class="composer">
+                    <textarea 
+                        class="composer-input" 
+                        id="messageInput" 
+                        placeholder="Tell us your legal problem..."
+                        rows="1"
+                    ></textarea>
+                    <button class="voice-button" id="voiceButton">
+                        <i class="fas fa-microphone"></i>
+                        <span>Voice</span>
+                    </button>
+                </div>
+                
+                <div class="upload-section">
+                    <button class="upload-button">
+                        <i class="fas fa-paperclip"></i>
+                        <span>Upload</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

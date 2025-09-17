@@ -1,0 +1,18 @@
+{
+  "name": "eezlegal-frontend",
+  "version": "1.0.0",
+  "description": "EezLegal Frontend - AI Legal Assistant",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static files ready'",
+    "start": "vercel dev"
+  },
+  "keywords": ["legal", "ai", "assistant"],
+  "author": "EezLegal Team",
+  "license": "MIT",
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  }
+}
+
