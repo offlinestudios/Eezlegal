@@ -276,9 +276,150 @@
     </main>
 
     <script>
-        // Handle OAuth callback when page loads
+        // 🔐 EezLegal OAuth Integration
+        const BACKEND_URL = 'https://eezlegal-production.up.railway.app';
+
+        // OAuth handler function
+        async function initiateGoogleAuth() {
+            try {
+                console.log('Starting Google OAuth...');
+                showLoading(true);
+                hideError();
+                
+                // Get OAuth URL from backend
+                const response = await fetch(`${BACKEND_URL}/auth/google`);
+                const data = await response.json();
+                
+                if (data.auth_url) {
+                    console.log('Redirecting to Google OAuth...');
+                    // Redirect to Google OAuth
+                    window.location.href = data.auth_url;
+                } else {
+                    console.error('No auth_url received:', data);
+                    showError('OAuth not configured properly on backend');
+                    showLoading(false);
+                }
+            } catch (error) {
+                console.error('OAuth initiation failed:', error);
+                showError('Failed to start Google authentication. Please try again.');
+                showLoading(false);
+            }
+        }
+
+        // Handle OAuth callback when user returns from Google
+        function handleOAuthCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const error = urlParams.get('error');
+            
+            if (error) {
+                console.error('OAuth error:', error);
+                showError(`Authentication failed: ${error}`);
+                return false;
+            }
+            
+            if (token) {
+                console.log('✅ OAuth successful! Token received.');
+                
+                // Store token
+                localStorage.setItem('eezlegal_token', token);
+                
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // Redirect to main app or dashboard
+                window.location.href = '/'; // Change this to your desired redirect
+                return true;
+            }
+            
+            return false;
+        }
+
+        // Check if user is already authenticated
+        async function isAuthenticated() {
+            const token = localStorage.getItem('eezlegal_token');
+            if (!token) return false;
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/auth/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token: token })
+                });
+
+                if (response.ok) {
+                    return true;
+                } else {
+                    // Token invalid, remove it
+                    localStorage.removeItem('eezlegal_token');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Token verification failed:', error);
+                return false;
+            }
+        }
+
+        // UI helper functions
+        function showLoading(loading) {
+            const googleBtn = document.querySelector('a[onclick*="initiateGoogleAuth"]');
+            if (googleBtn) {
+                if (loading) {
+                    googleBtn.style.opacity = '0.6';
+                    googleBtn.style.pointerEvents = 'none';
+                    const originalText = googleBtn.innerHTML;
+                    googleBtn.innerHTML = originalText.replace('Continue with Google', 'Loading...');
+                } else {
+                    googleBtn.style.opacity = '1';
+                    googleBtn.style.pointerEvents = 'auto';
+                    const originalText = googleBtn.innerHTML;
+                    googleBtn.innerHTML = originalText.replace('Loading...', 'Continue with Google');
+                }
+            }
+        }
+
+        function showError(message) {
+            // Create error div if it doesn't exist
+            let errorDiv = document.getElementById('oauth-error');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.id = 'oauth-error';
+                errorDiv.style.cssText = `
+                    background: #fee;
+                    color: #c33;
+                    padding: 12px;
+                    border-radius: 8px;
+                    margin-bottom: 16px;
+                    border: 1px solid #fcc;
+                    font-size: 14px;
+                `;
+                const container = document.querySelector('.auth-container');
+                const title = container.querySelector('.auth-title');
+                container.insertBefore(errorDiv, title.nextSibling);
+            }
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                hideError();
+            }, 5000);
+        }
+
+        function hideError() {
+            const errorDiv = document.getElementById('oauth-error');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        }
+
+        // Initialize when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if this is an OAuth callback
+            console.log('EezLegal OAuth: Initializing...');
+            
+            // Handle OAuth callback first
             if (handleOAuthCallback()) {
                 // Token was found and stored, user will be redirected
                 return;
@@ -287,11 +428,18 @@
             // Check if user is already authenticated
             isAuthenticated().then(authenticated => {
                 if (authenticated) {
-                    // User is already logged in, redirect to main app
+                    console.log('User already authenticated, redirecting...');
                     window.location.href = '/';
                 }
             });
+
+            console.log('✅ OAuth integration loaded successfully!');
         });
+
+        // Export functions for backward compatibility
+        window.initiateGoogleAuth = initiateGoogleAuth;
+        window.handleOAuthCallback = handleOAuthCallback;
+        window.isAuthenticated = isAuthenticated;
     </script>
 </body>
 </html>
