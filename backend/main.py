@@ -21,6 +21,24 @@ GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 SECRET_KEY = os.environ.get("SECRET_KEY")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://www.eezlegal.com")
 
+# Railway URL detection
+def get_railway_url():
+    """Get the correct Railway URL for OAuth callbacks"""
+    # Try multiple Railway environment variables
+    railway_url = (
+        os.environ.get("RAILWAY_STATIC_URL") or
+        os.environ.get("RAILWAY_PUBLIC_DOMAIN") or
+        os.environ.get("PUBLIC_DOMAIN") or
+        "https://eezlegal-production.up.railway.app"
+    )
+    
+    # Ensure it starts with https://
+    if not railway_url.startswith("http"):
+        railway_url = f"https://{railway_url}"
+    
+    logger.info(f"🔗 Using Railway URL: {railway_url}")
+    return railway_url
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -48,10 +66,13 @@ async def health_check():
 @app.get("/api")
 async def api_info():
     oauth_configured = bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET and SECRET_KEY)
+    railway_url = get_railway_url()
     return {
         "service": "EezLegal Backend",
         "version": "1.0.0",
         "oauth_configured": oauth_configured,
+        "railway_url": railway_url,
+        "redirect_uri": f"{railway_url}/auth/google/callback",
         "endpoints": [
             "/",
             "/health", 
@@ -70,10 +91,15 @@ async def google_auth():
     if not GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=500, detail="OAuth not configured")
     
+    railway_url = get_railway_url()
+    redirect_uri = f"{railway_url}/auth/google/callback"
+    
+    logger.info(f"🔐 Starting OAuth with redirect_uri: {redirect_uri}")
+    
     # Google OAuth URL
     params = {
         "client_id": GOOGLE_CLIENT_ID,
-        "redirect_uri": f"{os.environ.get('RAILWAY_STATIC_URL', 'http://localhost:8080')}/auth/google/callback",
+        "redirect_uri": redirect_uri,
         "scope": "openid email profile",
         "response_type": "code",
         "access_type": "offline",
@@ -81,37 +107,55 @@ async def google_auth():
     }
     
     auth_url = f"https://accounts.google.com/o/oauth2/auth?{urlencode(params)}"
+    logger.info(f"🔗 Generated auth URL: {auth_url}")
+    
     return {"auth_url": auth_url}
 
 @app.get("/auth/google/callback")
 async def google_callback(code: str = None, error: str = None):
     """Handle Google OAuth callback"""
+    railway_url = get_railway_url()
+    redirect_uri = f"{railway_url}/auth/google/callback"
+    
+    logger.info(f"📥 OAuth callback received - code: {'✅' if code else '❌'}, error: {error}")
+    logger.info(f"🔗 Using redirect_uri: {redirect_uri}")
+    
     if error:
+        logger.error(f"OAuth error: {error}")
         return RedirectResponse(url=f"{FRONTEND_URL}/login/?error={error}")
     
     if not code:
+        logger.error("No authorization code received")
         return RedirectResponse(url=f"{FRONTEND_URL}/login/?error=no_code")
     
     try:
         # Exchange code for tokens
         async with httpx.AsyncClient() as client:
+            token_data = {
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "code": code,
+                "grant_type": "authorization_code",
+                "redirect_uri": redirect_uri,
+            }
+            
+            logger.info(f"🔄 Exchanging code for tokens with redirect_uri: {redirect_uri}")
+            
             token_response = await client.post(
                 "https://oauth2.googleapis.com/token",
-                data={
-                    "client_id": GOOGLE_CLIENT_ID,
-                    "client_secret": GOOGLE_CLIENT_SECRET,
-                    "code": code,
-                    "grant_type": "authorization_code",
-                    "redirect_uri": f"{os.environ.get('RAILWAY_STATIC_URL', 'http://localhost:8080')}/auth/google/callback",
-                }
+                data=token_data
             )
             
             if token_response.status_code != 200:
-                logger.error(f"Token exchange failed: {token_response.text}")
+                logger.error(f"Token exchange failed: {token_response.status_code} - {token_response.text}")
                 return RedirectResponse(url=f"{FRONTEND_URL}/login/?error=token_exchange_failed")
             
             tokens = token_response.json()
             access_token = tokens.get("access_token")
+            
+            if not access_token:
+                logger.error("No access token received")
+                return RedirectResponse(url=f"{FRONTEND_URL}/login/?error=no_access_token")
             
             # Get user info from Google
             user_response = await client.get(
@@ -120,10 +164,11 @@ async def google_callback(code: str = None, error: str = None):
             )
             
             if user_response.status_code != 200:
-                logger.error(f"User info fetch failed: {user_response.text}")
+                logger.error(f"User info fetch failed: {user_response.status_code} - {user_response.text}")
                 return RedirectResponse(url=f"{FRONTEND_URL}/login/?error=user_info_failed")
             
             user_info = user_response.json()
+            logger.info(f"✅ User authenticated: {user_info.get('email')}")
             
             # Create JWT token
             jwt_payload = {
@@ -137,7 +182,10 @@ async def google_callback(code: str = None, error: str = None):
             jwt_token = jwt.encode(jwt_payload, SECRET_KEY, algorithm="HS256")
             
             # Redirect to frontend with token
-            return RedirectResponse(url=f"{FRONTEND_URL}/login/?token={jwt_token}")
+            success_url = f"{FRONTEND_URL}/login/?token={jwt_token}"
+            logger.info(f"🎉 OAuth successful, redirecting to: {FRONTEND_URL}/login/")
+            
+            return RedirectResponse(url=success_url)
             
     except Exception as e:
         logger.error(f"OAuth callback error: {str(e)}")
@@ -199,6 +247,7 @@ if __name__ == "__main__":
     logger.info(f"🌐 Host: 0.0.0.0")
     logger.info(f"🔧 Environment: {os.environ.get('ENVIRONMENT', 'production')}")
     logger.info(f"🔑 OAuth configured: {bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET and SECRET_KEY)}")
+    logger.info(f"🔗 Railway URL: {get_railway_url()}")
     
     uvicorn.run(
         "main:app",
