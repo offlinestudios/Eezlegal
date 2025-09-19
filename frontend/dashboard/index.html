@@ -3,86 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EezLegal - Dashboard</title>
-    <link rel="icon" type="image/png" href="../favicon.png">
+    <title>EezLegal Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="../config.js"></script>
     <style>
         :root {
-            /* Exact same colors as EezLegal landing page */
-            --bg: #f7f7f8;           /* light gray background */
-            --surface: #ffffff;      /* white panels/cards */
-            --surface-2: #f1f1f3;    /* light gray inputs/hover */
-            --text: #2d333a;         /* dark text */
-            --text-dim: #6e7681;     /* secondary gray text */
-            --border: #d1d5db;       /* light borders */
-            
-            --radius: 12px;
+            --bg: #f7f7f8;
+            --surface: #ffffff;
+            --surface-2: #f1f1f3;
+            --text: #2d333a;
+            --text-dim: #6e7681;
+            --border: #e5e7eb;
+            --radius: 8px;
             --pad: 16px;
-            --maxw: 720px;
         }
 
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
 
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
             color: var(--text);
-            font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-            display: flex;
-            min-height: 100vh;
-            position: relative;
+            overflow: hidden;
         }
 
-        /* Sidebar */
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar - ChatGPT Style */
         .sidebar {
             width: 260px;
             background: var(--surface);
-            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 56px);
-            position: fixed;
-            left: 0;
-            top: 56px;
-            z-index: 100;
+            height: 100vh;
+            position: relative;
+        }
+        
+        .sidebar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 1px;
+            height: 100%;
+            background: var(--border);
         }
 
-        .sidebar-header {
+        /* Sidebar Header - Logo and Collapse */
+        .sidebar-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             padding: var(--pad);
+            height: 56px;
         }
 
+        .sidebar-logo {
+            width: 24px;
+            height: 24px;
+            background: var(--text);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg);
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .sidebar-collapse {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .sidebar-collapse:hover {
+            background: var(--surface-2);
+            color: var(--text);
+        }
+
+        /* Sidebar Content */
+        .sidebar-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0 var(--pad);
+        }
+
+        /* New Chat Button - ChatGPT Style */
         .new-chat-btn {
             width: 100%;
             padding: 12px 16px;
-            background: var(--text);
-            color: var(--bg);
-            border: none;
+            background: none;
+            border: 1px solid var(--border);
             border-radius: var(--radius);
+            color: var(--text);
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
+            margin-bottom: 16px;
         }
 
         .new-chat-btn:hover {
-            background: var(--text-dim);
+            background: var(--surface-2);
         }
 
+        /* Search Chats */
+        .search-section {
+            margin-bottom: 16px;
+        }
+
+        .search-chats-btn {
+            width: 100%;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-radius: var(--radius);
+            text-align: left;
+        }
+
+        .search-chats-btn:hover {
+            background: var(--surface-2);
+            color: var(--text);
+        }
+
+        /* Chat History */
         .chat-history {
             flex: 1;
             overflow-y: auto;
-            padding: var(--pad);
+            margin-bottom: 16px;
         }
 
         .chat-item {
@@ -106,19 +178,19 @@
             background: var(--surface-2);
         }
 
+        /* User Profile */
         .user-profile {
-            padding: var(--pad);
-            border-top: 1px solid var(--border);
             position: relative;
+            margin-top: auto;
         }
 
         .user-info {
             display: flex;
             align-items: center;
             gap: 12px;
-            cursor: pointer;
             padding: 8px;
             border-radius: 8px;
+            cursor: pointer;
             transition: background-color 0.2s;
         }
 
@@ -154,89 +226,28 @@
             color: var(--text-dim);
         }
 
-        /* User dropdown menu */
-        .user-menu {
-            position: absolute;
-            bottom: 100%;
-            left: 8px;
-            right: 8px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            display: none;
-            z-index: 1000;
-        }
-
-        .user-menu.show {
-            display: block;
-        }
-
-        .menu-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            font-size: 14px;
-            color: var(--text);
-            transition: background-color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .menu-item:hover {
-            background: var(--surface-2);
-        }
-
-        .menu-item:first-child {
-            border-radius: 8px 8px 0 0;
-        }
-
-        .menu-item:last-child {
-            border-radius: 0 0 8px 8px;
-        }
-
-        /* Main content */
+        /* Main Content Area */
         .main-content {
             flex: 1;
-            margin-left: 260px;
-            margin-top: 56px;
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 56px);
+            height: 100vh;
         }
 
-        /* Header - spans full width across page */
-        .header {
+        /* Header - EezLegal Title (no border line) */
+        .main-header {
             height: 56px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 var(--pad);
             background: var(--bg);
-            border-bottom: 1px solid var(--border);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 200;
         }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .header-title {
+        .main-title {
             font-size: 18px;
             font-weight: 600;
             color: var(--text);
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
         }
 
         .help-btn {
@@ -254,27 +265,26 @@
             font-weight: 600;
         }
 
-        .help-btn:hover {
-            background: var(--surface);
-        }
-
-        /* Chat area - matching original layout */
+        /* Chat Container */
         .chat-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 80px clamp(16px, 4vw, 32px) 24px;
-            max-width: var(--maxw);
-            margin: 0 auto;
-            width: 100%;
+            padding: 0 clamp(16px, 4vw, 28px);
+            overflow-y: auto;
         }
 
+        /* Welcome Section */
         .welcome-section {
-            display: block;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            margin-bottom: 36px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 0;
         }
 
         .welcome-section.hidden {
@@ -290,23 +300,18 @@
             text-align: center;
         }
 
-        /* Chat messages */
+        /* Chat Messages */
         .chat {
+            flex: 1;
+            padding: 20px 0;
             display: none;
-            flex-direction: column;
-            gap: 16px;
-            margin-bottom: 24px;
-            width: 100%;
-        }
-
-        .chat:not(:empty) {
-            display: flex;
         }
 
         .message {
             display: flex;
             gap: 12px;
             max-width: 100%;
+            margin-bottom: 16px;
         }
 
         .message.user {
@@ -337,9 +342,12 @@
             border-bottom-left-radius: 4px;
         }
 
-        /* Composer section - matching original design exactly */
+        /* Composer Section - Keep original positioning */
         .composer-section {
             width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px 0;
         }
 
         .composer {
@@ -385,15 +393,10 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
-            white-space: nowrap;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-        }
-
-        .send-button:hover {
-            background: var(--text-dim);
+            min-width: 40px;
         }
 
         .send-button:disabled {
@@ -435,20 +438,18 @@
             gap: 8px;
             color: var(--text-dim);
             font-size: 14px;
-            padding: 16px;
-            justify-content: center;
         }
 
         .loading-dots {
-            display: flex;
-            gap: 4px;
+            display: inline-flex;
+            gap: 2px;
         }
 
         .loading-dot {
-            width: 6px;
-            height: 6px;
-            background: var(--text-dim);
+            width: 4px;
+            height: 4px;
             border-radius: 50%;
+            background: var(--text-dim);
             animation: loading 1.4s infinite ease-in-out;
         }
 
@@ -465,8 +466,8 @@
             .sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
-                top: 56px;
-                height: calc(100vh - 56px);
+                position: fixed;
+                z-index: 1000;
             }
 
             .sidebar.open {
@@ -474,9 +475,7 @@
             }
 
             .main-content {
-                margin-left: 0;
-                margin-top: 56px;
-                height: calc(100vh - 56px);
+                width: 100%;
             }
 
             .mobile-menu-btn {
@@ -484,7 +483,7 @@
                 position: fixed;
                 top: 16px;
                 left: 16px;
-                z-index: 101;
+                z-index: 999;
                 background: var(--surface);
                 border: 1px solid var(--border);
                 border-radius: 8px;
@@ -492,13 +491,8 @@
                 cursor: pointer;
             }
 
-            .header {
-                padding: 0 16px;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                z-index: 200;
+            .main-header {
+                padding: 0 60px 0 16px;
             }
 
             .chat-container {
@@ -508,36 +502,6 @@
 
         .mobile-menu-btn {
             display: none;
-        }
-
-        /* Hide scrollbar but keep functionality */
-        .chat-history::-webkit-scrollbar,
-        .chat::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .chat-history::-webkit-scrollbar-track,
-        .chat::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .chat-history::-webkit-scrollbar-thumb,
-        .chat::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 3px;
-        }
-
-        .chat-history::-webkit-scrollbar-thumb:hover,
-        .chat::-webkit-scrollbar-thumb:hover {
-            background: var(--text-dim);
-        }
-
-        /* Safe area insets for mobile */
-        @media (max-width: 768px) {
-            .header {
-                padding-left: max(16px, env(safe-area-inset-left));
-                padding-right: max(16px, env(safe-area-inset-right));
-            }
         }
 
         .hidden {
@@ -551,136 +515,126 @@
         <i class="fas fa-bars"></i>
     </button>
 
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <button class="new-chat-btn" onclick="startNewChat()">
-                <i class="fas fa-plus"></i>
-                New chat
-            </button>
-        </div>
-
-        <div class="chat-history" id="chatHistory">
-            <!-- Chat history will be loaded here -->
-        </div>
-
-        <div class="user-profile">
-            <div class="user-info" onclick="toggleUserMenu()">
-                <div class="user-avatar" id="userAvatar">U</div>
-                <div class="user-details">
-                    <div class="user-name" id="userName">Loading...</div>
-                    <div class="user-email" id="userEmail">Loading...</div>
-                </div>
-                <i class="fas fa-chevron-up"></i>
+    <div class="app-container">
+        <!-- Sidebar - ChatGPT Style -->
+        <div class="sidebar" id="sidebar">
+            <!-- Sidebar Top - Logo and Collapse -->
+            <div class="sidebar-top">
+                <div class="sidebar-logo">E</div>
+                <button class="sidebar-collapse" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
 
-            <div class="user-menu" id="userMenu">
-                <div class="menu-item" onclick="upgradePlan()">
-                    <i class="fas fa-crown"></i>
-                    Upgrade plan
-                </div>
-                <div class="menu-item" onclick="openSettings()">
-                    <i class="fas fa-cog"></i>
-                    Settings
-                </div>
-                <div class="menu-item" onclick="openHelp()">
-                    <i class="fas fa-question-circle"></i>
-                    Help
-                </div>
-                <div class="menu-item" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Log out
-                </div>
-            </div>
-        </div>
-    </div>
+            <!-- Sidebar Content -->
+            <div class="sidebar-content">
+                <!-- New Chat Button -->
+                <button class="new-chat-btn" onclick="startNewChat()">
+                    <i class="fas fa-plus"></i>
+                    New chat
+                </button>
 
-    <!-- Header spans full width -->
-    <header class="header">
-        <div class="header-left">
-            <span class="header-title">eezlegal</span>
-        </div>
-        <div class="header-right">
-            <button class="help-btn" aria-label="Help">
-                <i class="fas fa-question"></i>
-            </button>
-        </div>
-    </header>
-
-    <!-- Main content -->
-    <div class="main-content">
-
-        <div class="chat-container">
-            <!-- Welcome section (shown when no active chat) -->
-            <div class="welcome-section" id="welcomeSection">
-                <h1 class="title">Tell us your legal problem</h1>
-            </div>
-
-            <!-- Chat messages (shown during conversation) -->
-            <div class="chat" id="chat">
-                <!-- Messages will be added here -->
-            </div>
-
-            <!-- Loading indicator -->
-            <div class="loading" id="loadingIndicator" style="display: none;">
-                <div class="loading-dots">
-                    <div class="loading-dot"></div>
-                    <div class="loading-dot"></div>
-                    <div class="loading-dot"></div>
-                </div>
-                EezLegal is thinking...
-            </div>
-
-            <!-- Composer -->
-            <div class="composer-section">
-                <div class="composer">
-                    <textarea 
-                        class="composer-input" 
-                        id="messageInput" 
-                        placeholder="Type here"
-                        rows="1"
-                        onkeydown="handleKeyDown(event)"
-                        oninput="autoResize(this)"
-                    ></textarea>
-                    <button class="send-button" id="sendButton" onclick="sendMessage()" disabled>
-                        <i class="fas fa-paper-plane"></i>
+                <!-- Search Chats -->
+                <div class="search-section">
+                    <button class="search-chats-btn" onclick="searchChats()">
+                        <i class="fas fa-search"></i>
+                        Search chats
                     </button>
                 </div>
-                
-                <div class="upload-section">
-                    <button class="upload-button">
-                        <i class="fas fa-paperclip"></i>
-                        <span>Upload</span>
-                    </button>
+
+                <!-- Chat History -->
+                <div class="chat-history" id="chatHistory">
+                    <!-- Chat history will be loaded here -->
+                </div>
+
+                <!-- User Profile -->
+                <div class="user-profile">
+                    <div class="user-info" onclick="toggleUserMenu()">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <div class="user-details">
+                            <div class="user-name" id="userName">Loading...</div>
+                            <div class="user-email" id="userEmail">Loading...</div>
+                        </div>
+                        <i class="fas fa-chevron-up"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header with EezLegal Title (no border line) -->
+            <div class="main-header">
+                <div class="main-title">eezlegal</div>
+                <button class="help-btn" aria-label="Help">
+                    <i class="fas fa-question"></i>
+                </button>
+            </div>
+
+            <!-- Chat Container -->
+            <div class="chat-container">
+                <!-- Welcome section (shown when no active chat) -->
+                <div class="welcome-section" id="welcomeSection">
+                    <h1 class="title">Tell us your legal problem</h1>
+                </div>
+
+                <!-- Chat messages (shown during conversation) -->
+                <div class="chat" id="chat">
+                    <!-- Messages will be added here -->
+                </div>
+
+                <!-- Composer - Keep original positioning at bottom -->
+                <div class="composer-section">
+                    <div class="composer">
+                        <textarea 
+                            class="composer-input" 
+                            id="messageInput" 
+                            placeholder="Type here" 
+                            rows="1"
+                            onkeydown="handleKeyDown(event)"
+                            oninput="adjustTextareaHeight(this); toggleSendButton()"
+                        ></textarea>
+                        <button class="send-button" id="sendButton" onclick="sendMessage()" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="upload-section">
+                        <button class="upload-button">
+                            <i class="fas fa-paperclip"></i>
+                            <span>Upload</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Configuration
-        const BACKEND_URL = 'https://eezlegal-production.up.railway.app';
+        // Configuration - Fixed BACKEND_URL definition
+        const BACKEND_URL = (typeof API_CONFIG !== 'undefined') 
+            ? API_CONFIG.BASE_URL 
+            : 'https://eezlegal-production.up.railway.app';
         let currentChatId = null;
         let currentUser = null;
         let chatHistory = [];
 
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🚀 EezLegal Dashboard initializing...');
+        // Initialize the application
+        async function initializeApp() {
+            console.log('🚀 Initializing EezLegal Dashboard...');
             
-            // First, check for token in URL parameter (from OAuth callback)
+            // Check for OAuth token in URL
             const urlParams = new URLSearchParams(window.location.search);
             const urlToken = urlParams.get('token');
             
             if (urlToken) {
                 console.log('✅ Token received from OAuth callback');
-                setAuthToken(urlToken); // Store the token
-                // Clean the URL to remove the token parameter
+                setAuthToken(urlToken);
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
             
-            // Check authentication using the stored token
-            const token = getAuthToken(); // Use the function from config.js
+            // Check authentication
+            const token = getAuthToken();
             if (!token) {
                 console.log('❌ No token found, redirecting to login');
                 window.location.href = '/login/';
@@ -688,7 +642,7 @@
             }
 
             try {
-                // Verify token and get user info
+                // Verify token with backend
                 const response = await fetch(`${BACKEND_URL}/api/auth/verify`, {
                     method: 'POST',
                     headers: {
@@ -697,49 +651,43 @@
                     body: JSON.stringify({ token: token })
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    currentUser = data.user;
-                    updateUserProfile(currentUser);
+                const result = await response.json();
+                
+                if (result.valid) {
+                    currentUser = result.user;
+                    console.log('✅ User authenticated:', currentUser.email);
+                    
+                    // Update UI with user info
+                    updateUserInfo();
+                    
+                    // Load chat history
                     await loadChatHistory();
-                    console.log('✅ Dashboard initialized successfully');
+                    
+                    console.log('🎉 Dashboard initialized successfully');
                 } else {
                     console.log('❌ Token invalid, redirecting to login');
-                    removeAuthToken(); // Use the function from config.js
+                    removeAuthToken();
                     window.location.href = '/login/';
                 }
             } catch (error) {
                 console.error('❌ Authentication error:', error);
                 window.location.href = '/login/';
             }
+        }
 
-            // Enable send button when there's text
-            const messageInput = document.getElementById('messageInput');
-            messageInput.addEventListener('input', function() {
-                const sendButton = document.getElementById('sendButton');
-                sendButton.disabled = !this.value.trim();
-            });
-        });
-
-        // Update user profile in sidebar
-        function updateUserProfile(user) {
-            const userAvatar = document.getElementById('userAvatar');
-            const userName = document.getElementById('userName');
-            const userEmail = document.getElementById('userEmail');
-
-            // Set avatar (first letter of name or email)
-            const avatarText = user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase();
-            userAvatar.textContent = avatarText;
-
-            // Set name and email
-            userName.textContent = user.name || 'User';
-            userEmail.textContent = user.email;
-
-            // Set avatar image if available
-            if (user.picture) {
-                userAvatar.style.backgroundImage = `url(${user.picture})`;
-                userAvatar.style.backgroundSize = 'cover';
-                userAvatar.textContent = '';
+        // Update user info in the UI
+        function updateUserInfo() {
+            if (currentUser) {
+                document.getElementById('userName').textContent = currentUser.name;
+                document.getElementById('userEmail').textContent = currentUser.email;
+                
+                // Set user avatar
+                const avatar = document.getElementById('userAvatar');
+                if (currentUser.picture) {
+                    avatar.innerHTML = `<img src="${currentUser.picture}" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%;">`;
+                } else {
+                    avatar.textContent = currentUser.name.charAt(0).toUpperCase();
+                }
             }
         }
 
@@ -755,19 +703,19 @@
 
                 if (response.ok) {
                     chatHistory = await response.json();
-                    renderChatHistory();
+                    updateChatHistoryUI();
                 }
             } catch (error) {
-                console.error('Failed to load chat history:', error);
+                console.error('Error loading chat history:', error);
             }
         }
 
-        // Render chat history in sidebar
-        function renderChatHistory() {
+        // Update chat history UI
+        function updateChatHistoryUI() {
             const chatHistoryEl = document.getElementById('chatHistory');
             
             if (chatHistory.length === 0) {
-                chatHistoryEl.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--text-dim); font-size: 14px;">No previous chats</div>';
+                chatHistoryEl.innerHTML = '<div style="padding: 16px; color: var(--text-dim); font-size: 14px; text-align: center;">No chats yet</div>';
                 return;
             }
 
@@ -785,12 +733,15 @@
             document.getElementById('chat').style.display = 'none';
             document.getElementById('chat').innerHTML = '';
             document.getElementById('welcomeSection').classList.remove('hidden');
-            document.getElementById('messageInput').focus();
             
-            // Update active state in sidebar
-            document.querySelectorAll('.chat-item').forEach(item => {
-                item.classList.remove('active');
-            });
+            // Update chat history UI to remove active state
+            updateChatHistoryUI();
+        }
+
+        // Search chats function
+        function searchChats() {
+            // Placeholder for search functionality
+            console.log('Search chats clicked');
         }
 
         // Load specific chat
@@ -807,71 +758,82 @@
                     const chatData = await response.json();
                     currentChatId = chatId;
                     
-                    // Hide welcome, show messages
+                    // Hide welcome section and show chat
                     document.getElementById('welcomeSection').classList.add('hidden');
-                    document.getElementById('chat').style.display = 'flex';
+                    const chatEl = document.getElementById('chat');
+                    chatEl.style.display = 'block';
                     
-                    // Render messages
-                    renderMessages(chatData.messages);
+                    // Display messages
+                    chatEl.innerHTML = chatData.messages.map(msg => `
+                        <div class="message ${msg.role}">
+                            <div class="message-content">${msg.content}</div>
+                        </div>
+                    `).join('');
                     
-                    // Update active state in sidebar
-                    document.querySelectorAll('.chat-item').forEach(item => {
-                        item.classList.remove('active');
-                    });
-                    document.querySelector(`[onclick="loadChat('${chatId}')"]`)?.classList.add('active');
+                    // Update chat history UI
+                    updateChatHistoryUI();
+                    
+                    // Scroll to bottom
+                    chatEl.scrollTop = chatEl.scrollHeight;
                 }
             } catch (error) {
-                console.error('Failed to load chat:', error);
+                console.error('Error loading chat:', error);
             }
-        }
-
-        // Render messages
-        function renderMessages(messages) {
-            const chatEl = document.getElementById('chat');
-            
-            chatEl.innerHTML = messages.map(message => `
-                <div class="message ${message.role === 'user' ? 'user' : 'assistant'}">
-                    <div class="message-content">
-                        ${message.content}
-                    </div>
-                </div>
-            `).join('');
-
-            // Scroll to bottom
-            chatEl.scrollTop = chatEl.scrollHeight;
         }
 
         // Send message
         async function sendMessage() {
-            const messageInput = document.getElementById('messageInput');
-            const message = messageInput.value.trim();
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
             
             if (!message) return;
 
             // Clear input and disable send button
-            messageInput.value = '';
-            document.getElementById('sendButton').disabled = true;
-            autoResize(messageInput);
+            input.value = '';
+            toggleSendButton();
+            adjustTextareaHeight(input);
 
             // Hide welcome section if visible
-            if (!document.getElementById('welcomeSection').classList.contains('hidden')) {
-                document.getElementById('welcomeSection').classList.add('hidden');
-                document.getElementById('chat').style.display = 'flex';
-            }
+            document.getElementById('welcomeSection').classList.add('hidden');
+            
+            // Show chat area
+            const chatEl = document.getElementById('chat');
+            chatEl.style.display = 'block';
 
             // Add user message to UI
-            addMessageToUI('user', message);
+            const userMessageEl = document.createElement('div');
+            userMessageEl.className = 'message user';
+            userMessageEl.innerHTML = `<div class="message-content">${message}</div>`;
+            chatEl.appendChild(userMessageEl);
 
-            // Show loading
-            document.getElementById('loadingIndicator').style.display = 'flex';
+            // Add loading indicator
+            const loadingEl = document.createElement('div');
+            loadingEl.className = 'message assistant';
+            loadingEl.innerHTML = `
+                <div class="message-content">
+                    <div class="loading">
+                        <span>EezLegal is thinking</span>
+                        <div class="loading-dots">
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatEl.appendChild(loadingEl);
+
+            // Scroll to bottom
+            chatEl.scrollTop = chatEl.scrollHeight;
 
             try {
+                // Send message to backend
                 const token = getAuthToken();
                 const response = await fetch(`${BACKEND_URL}/api/chat`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': token ? `Bearer ${token}` : ''
                     },
                     body: JSON.stringify({
                         message: message,
@@ -879,41 +841,50 @@
                     })
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    // Update current chat ID if this was a new chat
-                    if (!currentChatId) {
-                        currentChatId = data.chat_id;
-                        await loadChatHistory(); // Refresh sidebar
-                    }
+                const result = await response.json();
 
-                    // Add AI response to UI
-                    addMessageToUI('assistant', data.response);
+                // Remove loading indicator
+                chatEl.removeChild(loadingEl);
+
+                if (result.status === 'success') {
+                    // Add AI response
+                    const aiMessageEl = document.createElement('div');
+                    aiMessageEl.className = 'message assistant';
+                    aiMessageEl.innerHTML = `<div class="message-content">${result.response}</div>`;
+                    chatEl.appendChild(aiMessageEl);
+
+                    // Update current chat ID
+                    currentChatId = result.chat_id;
+
+                    // Reload chat history to show new/updated chat
+                    await loadChatHistory();
                 } else {
-                    addMessageToUI('assistant', 'Sorry, I encountered an error. Please try again.');
+                    // Show error message
+                    const errorMessageEl = document.createElement('div');
+                    errorMessageEl.className = 'message assistant';
+                    errorMessageEl.innerHTML = `<div class="message-content">Sorry, I encountered an error. Please try again.</div>`;
+                    chatEl.appendChild(errorMessageEl);
                 }
-            } catch (error) {
-                console.error('Chat error:', error);
-                addMessageToUI('assistant', 'Sorry, I encountered an error. Please try again.');
-            } finally {
-                // Hide loading
-                document.getElementById('loadingIndicator').style.display = 'none';
-            }
-        }
 
-        // Add message to UI
-        function addMessageToUI(role, content) {
-            const chatEl = document.getElementById('chat');
-            const messageEl = document.createElement('div');
-            messageEl.className = `message ${role}`;
-            
-            messageEl.innerHTML = `
-                <div class="message-content">${content}</div>
-            `;
-            
-            chatEl.appendChild(messageEl);
-            chatEl.scrollTop = chatEl.scrollHeight;
+                // Scroll to bottom
+                chatEl.scrollTop = chatEl.scrollHeight;
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                
+                // Remove loading indicator
+                if (chatEl.contains(loadingEl)) {
+                    chatEl.removeChild(loadingEl);
+                }
+
+                // Show error message
+                const errorMessageEl = document.createElement('div');
+                errorMessageEl.className = 'message assistant';
+                errorMessageEl.innerHTML = `<div class="message-content">Sorry, I'm having trouble connecting. Please try again.</div>`;
+                chatEl.appendChild(errorMessageEl);
+
+                chatEl.scrollTop = chatEl.scrollHeight;
+            }
         }
 
         // Handle keyboard shortcuts
@@ -925,64 +896,38 @@
         }
 
         // Auto-resize textarea
-        function autoResize(textarea) {
+        function adjustTextareaHeight(textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
         }
 
-        // User menu functions
-        function toggleUserMenu() {
-            const userMenu = document.getElementById('userMenu');
-            userMenu.classList.toggle('show');
+        // Toggle send button state
+        function toggleSendButton() {
+            const input = document.getElementById('messageInput');
+            const button = document.getElementById('sendButton');
+            button.disabled = !input.value.trim();
         }
 
-        function upgradePlan() {
-            alert('Upgrade plan functionality coming soon!');
-            toggleUserMenu();
-        }
-
-        function openSettings() {
-            alert('Settings functionality coming soon!');
-            toggleUserMenu();
-        }
-
-        function openHelp() {
-            alert('Help functionality coming soon!');
-            toggleUserMenu();
-        }
-
-        function logout() {
-            removeAuthToken(); // Use the function from config.js
-            window.location.href = '/login/';
-        }
-
-        // Mobile sidebar toggle
+        // Toggle sidebar (mobile)
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('open');
         }
 
-        // Close user menu when clicking outside
-        document.addEventListener('click', function(event) {
-            const userMenu = document.getElementById('userMenu');
-            const userInfo = document.querySelector('.user-info');
-            
-            if (!userInfo.contains(event.target)) {
-                userMenu.classList.remove('show');
-            }
-        });
+        // Toggle user menu
+        function toggleUserMenu() {
+            // Placeholder for user menu functionality
+            console.log('User menu clicked');
+        }
 
-        // Close mobile sidebar when clicking outside
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-            
-            if (window.innerWidth <= 768 && 
-                !sidebar.contains(event.target) && 
-                !mobileMenuBtn.contains(event.target)) {
-                sidebar.classList.remove('open');
-            }
-        });
+        // Logout function
+        function logout() {
+            removeAuthToken();
+            window.location.href = '/login/';
+        }
+
+        // Initialize app when page loads
+        document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
 </html>

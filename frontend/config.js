@@ -1,88 +1,99 @@
-// API Configuration
+// EezLegal Frontend Configuration - Fixed Version
+// Addresses BACKEND_URL undefined issue
+
 const API_CONFIG = {
-  // Update this URL to your Railway backend URL after deployment
-  BASE_URL: process.env.NODE_ENV === 'production' 
-    ? 'https://eezlegal-production.up.railway.app' 
-    : 'http://localhost:8000',
-  
-  ENDPOINTS: {
-    CHAT: '/api/chat',
-    AUTH: '/api/auth',
-    AUTH_VERIFY: '/api/auth/verify',
-    GOOGLE_AUTH: '/auth/google',
-    LOGIN: '/login',
-    SIGNUP: '/signup'
-  }
+    BASE_URL: 'https://eezlegal-production.up.railway.app',
+    ENDPOINTS: {
+        AUTH_GOOGLE: '/auth/google',
+        AUTH_VERIFY: '/api/auth/verify',
+        CHAT: '/api/chat',
+        CHATS: '/api/chats'
+    }
 };
 
 // Helper function to get full API URL
 function getApiUrl(endpoint) {
-  return API_CONFIG.BASE_URL + endpoint;
+    return `${API_CONFIG.BASE_URL}${endpoint}`;
 }
 
-// OAuth helper functions
-function initiateGoogleAuth() {
-  window.location.href = getApiUrl(API_CONFIG.ENDPOINTS.GOOGLE_AUTH);
-}
-
-// Token management
+// Token management functions
 function setAuthToken(token) {
-  localStorage.setItem('auth_token', token);
+    localStorage.setItem('auth_token', token);
 }
 
 function getAuthToken() {
-  return localStorage.getItem('auth_token');
+    return localStorage.getItem('auth_token');
 }
 
 function removeAuthToken() {
-  localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_token');
 }
 
 // Check if user is authenticated
-async function isAuthenticated() {
-  const token = getAuthToken();
-  if (!token) return false;
-  
-  try {
-    const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.AUTH_VERIFY), {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
+function isAuthenticated() {
+    const token = getAuthToken();
+    if (!token) return false;
     
-    return response.ok;
-  } catch (error) {
-    console.error('Auth verification failed:', error);
-    return false;
-  }
+    try {
+        // Basic token format check
+        const parts = token.split('.');
+        if (parts.length !== 3) return false;
+        
+        // Check if token is expired (basic check)
+        const payload = JSON.parse(atob(parts[1]));
+        const now = Math.floor(Date.now() / 1000);
+        
+        return payload.exp > now;
+    } catch (e) {
+        return false;
+    }
 }
 
-// Handle OAuth callback (extract token from URL)
-function handleOAuthCallback() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('token');
-  
-  if (token) {
-    setAuthToken(token);
-    // Redirect to dashboard or main app
-    window.location.href = '/dashboard/';
+// Redirect to login if not authenticated
+function requireAuth() {
+    if (!isAuthenticated()) {
+        window.location.href = '/login/';
+        return false;
+    }
     return true;
-  }
-  return false;
 }
 
-// Export for use in other files
+// Get user info from token
+function getUserFromToken() {
+    const token = getAuthToken();
+    if (!token) return null;
+    
+    try {
+        const parts = token.split('.');
+        const payload = JSON.parse(atob(parts[1]));
+        return {
+            user_id: payload.user_id,
+            email: payload.email,
+            name: payload.name,
+            picture: payload.picture
+        };
+    } catch (e) {
+        return null;
+    }
+}
+
+// Logout function
+function logout() {
+    removeAuthToken();
+    window.location.href = '/login/';
+}
+
+// Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { 
-    API_CONFIG, 
-    getApiUrl, 
-    initiateGoogleAuth,
-    setAuthToken,
-    getAuthToken,
-    removeAuthToken,
-    isAuthenticated,
-    handleOAuthCallback
-  };
+    module.exports = {
+        API_CONFIG,
+        getApiUrl,
+        setAuthToken,
+        getAuthToken,
+        removeAuthToken,
+        isAuthenticated,
+        requireAuth,
+        getUserFromToken,
+        logout
+    };
 }
