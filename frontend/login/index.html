@@ -321,23 +321,23 @@
             if (token) {
                 console.log('✅ OAuth successful! Token received.');
                 
-                // Store token
-                localStorage.setItem('eezlegal_token', token);
+                // Store token using config.js function
+                setAuthToken(token);
                 
                 // Clean URL
                 window.history.replaceState({}, document.title, window.location.pathname);
                 
-                // Redirect to main app or dashboard
-                window.location.href = '/'; // Change this to your desired redirect
+                // Redirect to dashboard
+                window.location.href = '/dashboard/';
                 return true;
             }
             
             return false;
         }
 
-        // Check if user is already authenticated
-        async function isAuthenticated() {
-            const token = localStorage.getItem('eezlegal_token');
+        // Check if user is already authenticated (use config.js function)
+        async function checkExistingAuth() {
+            const token = getAuthToken();
             if (!token) return false;
 
             try {
@@ -353,7 +353,7 @@
                     return true;
                 } else {
                     // Token invalid, remove it
-                    localStorage.removeItem('eezlegal_token');
+                    removeAuthToken();
                     return false;
                 }
             } catch (error) {
@@ -426,10 +426,10 @@
             }
             
             // Check if user is already authenticated
-            isAuthenticated().then(authenticated => {
+            checkExistingAuth().then(authenticated => {
                 if (authenticated) {
                     console.log('User already authenticated, redirecting...');
-                    window.location.href = '/';
+                    window.location.href = '/dashboard/';
                 }
             });
 
@@ -439,7 +439,7 @@
         // Export functions for backward compatibility
         window.initiateGoogleAuth = initiateGoogleAuth;
         window.handleOAuthCallback = handleOAuthCallback;
-        window.isAuthenticated = isAuthenticated;
+        window.checkExistingAuth = checkExistingAuth;
     </script>
 </body>
 </html>
