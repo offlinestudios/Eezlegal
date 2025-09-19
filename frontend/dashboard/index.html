@@ -48,16 +48,15 @@
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            height: calc(100vh - 56px);
             position: fixed;
             left: 0;
-            top: 0;
+            top: 56px;
             z-index: 100;
         }
 
         .sidebar-header {
             padding: var(--pad);
-            border-bottom: 1px solid var(--border);
         }
 
         .new-chat-btn {
@@ -200,27 +199,32 @@
         .main-content {
             flex: 1;
             margin-left: 260px;
+            margin-top: 56px;
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            height: calc(100vh - 56px);
         }
 
-        /* Header - matching original EezLegal design */
+        /* Header - spans full width across page */
         .header {
             height: 56px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 clamp(16px, 4vw, 28px);
+            padding: 0 var(--pad);
             background: var(--bg);
             border-bottom: 1px solid var(--border);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
         }
 
         .header-left {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-left: 4px;
         }
 
         .header-title {
@@ -460,7 +464,9 @@
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
-                transition: transform 0.3s;
+                transition: transform 0.3s ease;
+                top: 56px;
+                height: calc(100vh - 56px);
             }
 
             .sidebar.open {
@@ -469,6 +475,8 @@
 
             .main-content {
                 margin-left: 0;
+                margin-top: 56px;
+                height: calc(100vh - 56px);
             }
 
             .mobile-menu-btn {
@@ -486,6 +494,11 @@
 
             .header {
                 padding: 0 16px;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 200;
             }
 
             .chat-container {
@@ -582,18 +595,20 @@
         </div>
     </div>
 
+    <!-- Header spans full width -->
+    <header class="header">
+        <div class="header-left">
+            <span class="header-title">eezlegal</span>
+        </div>
+        <div class="header-right">
+            <button class="help-btn" aria-label="Help">
+                <i class="fas fa-question"></i>
+            </button>
+        </div>
+    </header>
+
     <!-- Main content -->
     <div class="main-content">
-        <header class="header">
-            <div class="header-left">
-                <span class="header-title">eezlegal</span>
-            </div>
-            <div class="header-right">
-                <button class="help-btn" aria-label="Help">
-                    <i class="fas fa-question"></i>
-                </button>
-            </div>
-        </header>
 
         <div class="chat-container">
             <!-- Welcome section (shown when no active chat) -->
