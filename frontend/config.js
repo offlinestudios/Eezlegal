@@ -1,89 +1,117 @@
-// API Configuration
-const API_CONFIG = {
-  // Update this URL to your Railway backend URL after deployment
-  BASE_URL: process.env.NODE_ENV === 'production' 
-    ? 'https://your-backend-url.railway.app' 
-    : 'http://localhost:8000',
-  
-  ENDPOINTS: {
-    CHAT: '/api/chat',
-    AUTH: '/api/auth',
-    AUTH_VERIFY: '/api/auth/verify',
-    GOOGLE_AUTH: '/auth/google',
-    LOGIN: '/login',
-    SIGNUP: '/signup'
-  }
+// EezLegal Frontend Configuration
+
+// Backend API URL - Update this to match your Railway deployment
+const BACKEND_URL = 'https://eezlegal-production.up.railway.app';
+
+// Frontend configuration
+const CONFIG = {
+    // API endpoints
+    api: {
+        base: BACKEND_URL,
+        auth: {
+            google: `${BACKEND_URL}/auth/google`,
+            verify: `${BACKEND_URL}/api/auth/verify`,
+            callback: `${BACKEND_URL}/auth/google/callback`
+        },
+        chat: `${BACKEND_URL}/api/chat`,
+        chats: `${BACKEND_URL}/api/chats`,
+        health: `${BACKEND_URL}/health`
+    },
+    
+    // Application settings
+    app: {
+        name: 'EezLegal',
+        version: '1.0.0',
+        description: 'Your AI Legal Assistant'
+    },
+    
+    // UI settings
+    ui: {
+        theme: 'light',
+        maxChatHistory: 50,
+        messageMaxLength: 2000,
+        autoSaveInterval: 30000 // 30 seconds
+    },
+    
+    // Storage keys
+    storage: {
+        token: 'eezlegal_token',
+        user: 'eezlegal_user',
+        preferences: 'eezlegal_preferences'
+    }
 };
 
-// Helper function to get full API URL
-function getApiUrl(endpoint) {
-  return API_CONFIG.BASE_URL + endpoint;
-}
+// Make configuration available globally
+window.EEZLEGAL_CONFIG = CONFIG;
 
-// OAuth helper functions
-function initiateGoogleAuth() {
-  window.location.href = getApiUrl(API_CONFIG.ENDPOINTS.GOOGLE_AUTH);
-}
-
-// Token management
-function setAuthToken(token) {
-  localStorage.setItem('auth_token', token);
-}
-
-function getAuthToken() {
-  return localStorage.getItem('auth_token');
-}
-
-function removeAuthToken() {
-  localStorage.removeItem('auth_token');
-}
-
-// Check if user is authenticated
-async function isAuthenticated() {
-  const token = getAuthToken();
-  if (!token) return false;
-  
-  try {
-    const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.AUTH_VERIFY), {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
+// Utility functions
+window.EezLegalUtils = {
+    // Get stored token
+    getToken: () => localStorage.getItem(CONFIG.storage.token),
     
-    return response.ok;
-  } catch (error) {
-    console.error('Auth verification failed:', error);
-    return false;
-  }
-}
+    // Set token
+    setToken: (token) => localStorage.setItem(CONFIG.storage.token, token),
+    
+    // Remove token
+    removeToken: () => localStorage.removeItem(CONFIG.storage.token),
+    
+    // Check if user is authenticated
+    isAuthenticated: () => !!window.EezLegalUtils.getToken(),
+    
+    // Format date
+    formatDate: (date) => {
+        return new Date(date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    },
+    
+    // Truncate text
+    truncateText: (text, maxLength = 50) => {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+    },
+    
+    // API request helper
+    apiRequest: async (endpoint, options = {}) => {
+        const token = window.EezLegalUtils.getToken();
+        const defaultHeaders = {
+            'Content-Type': 'application/json',
+        };
+        
+        if (token) {
+            defaultHeaders['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const config = {
+            headers: defaultHeaders,
+            ...options,
+            headers: {
+                ...defaultHeaders,
+                ...options.headers
+            }
+        };
+        
+        try {
+            const response = await fetch(`${BACKEND_URL}${endpoint}`, config);
+            
+            if (response.status === 401) {
+                // Token expired or invalid
+                window.EezLegalUtils.removeToken();
+                window.location.href = '/login/';
+                return null;
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('API request failed:', error);
+            throw error;
+        }
+    }
+};
 
-// Handle OAuth callback (extract token from URL)
-function handleOAuthCallback() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('token');
-  
-  if (token) {
-    setAuthToken(token);
-    // Redirect to dashboard or main app
-    window.location.href = '/';
-    return true;
-  }
-  return false;
-}
-
-// Export for use in other files
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { 
-    API_CONFIG, 
-    getApiUrl, 
-    initiateGoogleAuth,
-    setAuthToken,
-    getAuthToken,
-    removeAuthToken,
-    isAuthenticated,
-    handleOAuthCallback
-  };
-}
-
+console.log('✅ EezLegal configuration loaded');
+console.log('🔗 Backend URL:', BACKEND_URL);
