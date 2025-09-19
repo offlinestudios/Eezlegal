@@ -28,8 +28,7 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 # Configure OpenAI
 if OPENAI_API_KEY:
-    openai.api_key = OPENAI_API_KEY
-    logger.info("✅ OpenAI API configured")
+    logger.info("✅ OpenAI API key found")
 else:
     logger.warning("⚠️ OpenAI API key not found - using placeholder responses")
 
@@ -317,11 +316,14 @@ Remember: You are an AI assistant providing legal information and guidance, not 
             "content": message
         })
         
-        # Call OpenAI API with improved parameters
-        response = await openai.ChatCompletion.acreate(
-            model="gpt-3.5-turbo",
+        # Call OpenAI API with improved parameters using new client
+        from openai import AsyncOpenAI
+        client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+        
+        response = await client.chat.completions.create(
+            model="gpt-4",
             messages=messages,
-            max_tokens=1200,
+            max_tokens=1500,
             temperature=0.7,
             top_p=0.9,
             frequency_penalty=0.1,
@@ -332,39 +334,22 @@ Remember: You are an AI assistant providing legal information and guidance, not 
         logger.info(f"✅ OpenAI response generated successfully ({len(ai_response)} chars)")
         return ai_response
         
-    except openai.error.RateLimitError:
-        logger.error("OpenAI API rate limit exceeded")
-        return "I'm currently experiencing high demand. Please try again in a moment. I'm here to help with your legal questions as soon as possible."
-        
-    except openai.error.InvalidRequestError as e:
-        logger.error(f"OpenAI API invalid request: {str(e)}")
-        return "I encountered an issue processing your request. Could you please rephrase your question? I'm here to help with your legal needs."
-        
-    except openai.error.AuthenticationError:
-        logger.error("OpenAI API authentication failed")
-        return "I'm experiencing technical difficulties with my AI service. Please try again later, and I'll do my best to assist you with your legal questions."
-        
-    except openai.error.APIError as e:
-        logger.error(f"OpenAI API error: {str(e)}")
-        return "I'm temporarily experiencing technical issues. Please try again in a moment. I'm committed to helping you with your legal needs."
-        
     except Exception as e:
-        logger.error(f"Unexpected OpenAI error: {str(e)}")
+        error_str = str(e).lower()
+        if "rate limit" in error_str:
+            logger.error("OpenAI API rate limit exceeded")
+            return "I'm currently experiencing high demand. Please try again in a moment. I'm here to help with your legal questions as soon as possible."
+        elif "authentication" in error_str or "api key" in error_str:
+            logger.error("OpenAI API authentication failed")
+            return "I'm experiencing technical difficulties with my AI service. Please try again later, and I'll do my best to assist you with your legal questions."
+        elif "invalid" in error_str:
+            logger.error(f"OpenAI API invalid request: {str(e)}")
+            return "I encountered an issue processing your request. Could you please rephrase your question? I'm here to help with your legal needs."
+        else:
+            logger.error(f"OpenAI API error: {str(e)}")
+            return "I'm temporarily experiencing technical issues. Please try again in a moment. I'm committed to helping you with your legal needs."
         
-        # Enhanced fallback response on unexpected error
-        user_context = f" {user_name}," if user_name else ""
-        return f"""Hello{user_context} I'm EezLegal AI, your legal assistant. 
 
-I'm currently experiencing some technical difficulties, but I'm here to help you with:
-• Legal questions and guidance
-• Document review and analysis  
-• Contract interpretation
-• Legal research assistance
-• Compliance questions
-
-Could you please try rephrasing your question? I'll do my best to assist you with your legal needs.
-
-**Note:** I provide legal information and guidance, but always recommend consulting with a licensed attorney for specific legal matters."""
 
 # API Routes
 @app.get("/")
