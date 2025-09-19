@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EezLegal - Dashboard</title>
+    <link rel="icon" type="image/png" href="../favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="../config.js"></script>
+    <style>
+        :root {
+            /* Exact same colors as EezLegal landing page */
+            --bg: #f7f7f8;           /* light gray background */
+            --surface: #ffffff;      /* white panels/cards */
+            --surface-2: #f1f1f3;    /* light gray inputs/hover */
+            --text: #2d333a;         /* dark text */
+            --text-dim: #6e7681;     /* secondary gray text */
+            --border: #d1d5db;       /* light borders */
+            
+            --radius: 12px;
+            --pad: 16px;
+            --maxw: 720px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: var(--pad);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--text);
+            color: var(--bg);
+            border: none;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .new-chat-btn:hover {
+            background: var(--text-dim);
+        }
+
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--pad);
+        }
+
+        .chat-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            font-size: 14px;
+            color: var(--text);
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-item:hover {
+            background: var(--surface-2);
+        }
+
+        .chat-item.active {
+            background: var(--surface-2);
+        }
+
+        .user-profile {
+            padding: var(--pad);
+            border-top: 1px solid var(--border);
+            position: relative;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .user-info:hover {
+            background: var(--surface-2);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        /* User dropdown menu */
+        .user-menu {
+            position: absolute;
+            bottom: 100%;
+            left: 8px;
+            right: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+        }
+
+        .user-menu.show {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text);
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item:hover {
+            background: var(--surface-2);
+        }
+
+        .menu-item:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+
+        .menu-item:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header - matching original EezLegal design */
+        .header {
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 clamp(16px, 4vw, 28px);
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .help-btn {
+            background: var(--surface-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .help-btn:hover {
+            background: var(--surface);
+        }
+
+        /* Chat area - matching original layout */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px clamp(16px, 4vw, 32px) 24px;
+            max-width: var(--maxw);
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .welcome-section {
+            display: block;
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .welcome-section.hidden {
+            display: none;
+        }
+
+        .title {
+            font-size: clamp(36px, 6vw, 56px);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            margin: 0 0 36px;
+            text-align: center;
+        }
+
+        /* Chat messages */
+        .chat {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+            width: 100%;
+        }
+
+        .chat:not(:empty) {
+            display: flex;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 100%;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: var(--surface-2);
+            color: var(--text);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background: var(--surface);
+            color: var(--text);
+            border-bottom-left-radius: 4px;
+        }
+
+        /* Composer section - matching original design exactly */
+        .composer-section {
+            width: 100%;
+        }
+
+        .composer {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 8px;
+            transition: border-color 0.2s ease;
+        }
+
+        .composer:focus-within {
+            border-color: var(--text-dim);
+        }
+
+        .composer-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 16px;
+            line-height: 1.5;
+            color: var(--text);
+            min-height: 24px;
+            max-height: 120px;
+            padding: 12px 14px;
+        }
+
+        .composer-input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .send-button {
+            background: var(--text);
+            color: var(--bg);
+            border: none;
+            border-radius: 16px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .send-button:hover {
+            background: var(--text-dim);
+        }
+
+        .send-button:disabled {
+            background: var(--surface-2);
+            color: var(--text-dim);
+            cursor: not-allowed;
+        }
+
+        .upload-section {
+            margin-top: 16px;
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .upload-button {
+            background: transparent;
+            color: var(--text-dim);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .upload-button:hover {
+            background: var(--surface-2);
+            color: var(--text);
+            border-style: solid;
+        }
+
+        /* Loading indicator */
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-dim);
+            font-size: 14px;
+            padding: 16px;
+            justify-content: center;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .loading-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--text-dim);
+            border-radius: 50%;
+            animation: loading 1.4s infinite ease-in-out;
+        }
+
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes loading {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+                position: fixed;
+                top: 16px;
+                left: 16px;
+                z-index: 101;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 8px;
+                cursor: pointer;
+            }
+
+            .header {
+                padding: 0 16px;
+            }
+
+            .chat-container {
+                padding: 70px 16px 24px;
+            }
+        }
+
+        .mobile-menu-btn {
+            display: none;
+        }
+
+        /* Hide scrollbar but keep functionality */
+        .chat-history::-webkit-scrollbar,
+        .chat::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-history::-webkit-scrollbar-track,
+        .chat::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-history::-webkit-scrollbar-thumb,
+        .chat::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .chat-history::-webkit-scrollbar-thumb:hover,
+        .chat::-webkit-scrollbar-thumb:hover {
+            background: var(--text-dim);
+        }
+
+        /* Safe area insets for mobile */
+        @media (max-width: 768px) {
+            .header {
+                padding-left: max(16px, env(safe-area-inset-left));
+                padding-right: max(16px, env(safe-area-inset-right));
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile menu button -->
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="new-chat-btn" onclick="startNewChat()">
+                <i class="fas fa-plus"></i>
+                New chat
+            </button>
+        </div>
+
+        <div class="chat-history" id="chatHistory">
+            <!-- Chat history will be loaded here -->
+        </div>
+
+        <div class="user-profile">
+            <div class="user-info" onclick="toggleUserMenu()">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <div class="user-details">
+                    <div class="user-name" id="userName">Loading...</div>
+                    <div class="user-email" id="userEmail">Loading...</div>
+                </div>
+                <i class="fas fa-chevron-up"></i>
+            </div>
+
+            <div class="user-menu" id="userMenu">
+                <div class="menu-item" onclick="upgradePlan()">
+                    <i class="fas fa-crown"></i>
+                    Upgrade plan
+                </div>
+                <div class="menu-item" onclick="openSettings()">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </div>
+                <div class="menu-item" onclick="openHelp()">
+                    <i class="fas fa-question-circle"></i>
+                    Help
+                </div>
+                <div class="menu-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Log out
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <span class="header-title">eezlegal</span>
+            </div>
+            <div class="header-right">
+                <button class="help-btn" aria-label="Help">
+                    <i class="fas fa-question"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="chat-container">
+            <!-- Welcome section (shown when no active chat) -->
+            <div class="welcome-section" id="welcomeSection">
+                <h1 class="title">Tell us your legal problem</h1>
+            </div>
+
+            <!-- Chat messages (shown during conversation) -->
+            <div class="chat" id="chat">
+                <!-- Messages will be added here -->
+            </div>
+
+            <!-- Loading indicator -->
+            <div class="loading" id="loadingIndicator" style="display: none;">
+                <div class="loading-dots">
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                </div>
+                EezLegal is thinking...
+            </div>
+
+            <!-- Composer -->
+            <div class="composer-section">
+                <div class="composer">
+                    <textarea 
+                        class="composer-input" 
+                        id="messageInput" 
+                        placeholder="Type here"
+                        rows="1"
+                        onkeydown="handleKeyDown(event)"
+                        oninput="autoResize(this)"
+                    ></textarea>
+                    <button class="send-button" id="sendButton" onclick="sendMessage()" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                
+                <div class="upload-section">
+                    <button class="upload-button">
+                        <i class="fas fa-paperclip"></i>
+                        <span>Upload</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const BACKEND_URL = 'https://eezlegal-production.up.railway.app';
+        let currentChatId = null;
+        let currentUser = null;
+        let chatHistory = [];
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 EezLegal Dashboard initializing...');
+            
+            // Check authentication using the original token key
+            const token = getAuthToken(); // Use the function from config.js
+            if (!token) {
+                console.log('❌ No token found, redirecting to login');
+                window.location.href = '/login/';
+                return;
+            }
+
+            try {
+                // Verify token and get user info
+                const response = await fetch(`${BACKEND_URL}/api/auth/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token: token })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    updateUserProfile(currentUser);
+                    await loadChatHistory();
+                    console.log('✅ Dashboard initialized successfully');
+                } else {
+                    console.log('❌ Token invalid, redirecting to login');
+                    removeAuthToken(); // Use the function from config.js
+                    window.location.href = '/login/';
+                }
+            } catch (error) {
+                console.error('❌ Authentication error:', error);
+                window.location.href = '/login/';
+            }
+
+            // Enable send button when there's text
+            const messageInput = document.getElementById('messageInput');
+            messageInput.addEventListener('input', function() {
+                const sendButton = document.getElementById('sendButton');
+                sendButton.disabled = !this.value.trim();
+            });
+        });
+
+        // Update user profile in sidebar
+        function updateUserProfile(user) {
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+            const userEmail = document.getElementById('userEmail');
+
+            // Set avatar (first letter of name or email)
+            const avatarText = user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase();
+            userAvatar.textContent = avatarText;
+
+            // Set name and email
+            userName.textContent = user.name || 'User';
+            userEmail.textContent = user.email;
+
+            // Set avatar image if available
+            if (user.picture) {
+                userAvatar.style.backgroundImage = `url(${user.picture})`;
+                userAvatar.style.backgroundSize = 'cover';
+                userAvatar.textContent = '';
+            }
+        }
+
+        // Load chat history
+        async function loadChatHistory() {
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`${BACKEND_URL}/api/chats`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    chatHistory = await response.json();
+                    renderChatHistory();
+                }
+            } catch (error) {
+                console.error('Failed to load chat history:', error);
+            }
+        }
+
+        // Render chat history in sidebar
+        function renderChatHistory() {
+            const chatHistoryEl = document.getElementById('chatHistory');
+            
+            if (chatHistory.length === 0) {
+                chatHistoryEl.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--text-dim); font-size: 14px;">No previous chats</div>';
+                return;
+            }
+
+            chatHistoryEl.innerHTML = chatHistory.map(chat => `
+                <div class="chat-item ${chat.id === currentChatId ? 'active' : ''}" onclick="loadChat('${chat.id}')">
+                    <i class="fas fa-comment"></i>
+                    <span>${chat.title}</span>
+                </div>
+            `).join('');
+        }
+
+        // Start new chat
+        function startNewChat() {
+            currentChatId = null;
+            document.getElementById('chat').style.display = 'none';
+            document.getElementById('chat').innerHTML = '';
+            document.getElementById('welcomeSection').classList.remove('hidden');
+            document.getElementById('messageInput').focus();
+            
+            // Update active state in sidebar
+            document.querySelectorAll('.chat-item').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+
+        // Load specific chat
+        async function loadChat(chatId) {
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`${BACKEND_URL}/api/chats/${chatId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const chatData = await response.json();
+                    currentChatId = chatId;
+                    
+                    // Hide welcome, show messages
+                    document.getElementById('welcomeSection').classList.add('hidden');
+                    document.getElementById('chat').style.display = 'flex';
+                    
+                    // Render messages
+                    renderMessages(chatData.messages);
+                    
+                    // Update active state in sidebar
+                    document.querySelectorAll('.chat-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    document.querySelector(`[onclick="loadChat('${chatId}')"]`)?.classList.add('active');
+                }
+            } catch (error) {
+                console.error('Failed to load chat:', error);
+            }
+        }
+
+        // Render messages
+        function renderMessages(messages) {
+            const chatEl = document.getElementById('chat');
+            
+            chatEl.innerHTML = messages.map(message => `
+                <div class="message ${message.role === 'user' ? 'user' : 'assistant'}">
+                    <div class="message-content">
+                        ${message.content}
+                    </div>
+                </div>
+            `).join('');
+
+            // Scroll to bottom
+            chatEl.scrollTop = chatEl.scrollHeight;
+        }
+
+        // Send message
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message) return;
+
+            // Clear input and disable send button
+            messageInput.value = '';
+            document.getElementById('sendButton').disabled = true;
+            autoResize(messageInput);
+
+            // Hide welcome section if visible
+            if (!document.getElementById('welcomeSection').classList.contains('hidden')) {
+                document.getElementById('welcomeSection').classList.add('hidden');
+                document.getElementById('chat').style.display = 'flex';
+            }
+
+            // Add user message to UI
+            addMessageToUI('user', message);
+
+            // Show loading
+            document.getElementById('loadingIndicator').style.display = 'flex';
+
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`${BACKEND_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        chat_id: currentChatId
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Update current chat ID if this was a new chat
+                    if (!currentChatId) {
+                        currentChatId = data.chat_id;
+                        await loadChatHistory(); // Refresh sidebar
+                    }
+
+                    // Add AI response to UI
+                    addMessageToUI('assistant', data.response);
+                } else {
+                    addMessageToUI('assistant', 'Sorry, I encountered an error. Please try again.');
+                }
+            } catch (error) {
+                console.error('Chat error:', error);
+                addMessageToUI('assistant', 'Sorry, I encountered an error. Please try again.');
+            } finally {
+                // Hide loading
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        }
+
+        // Add message to UI
+        function addMessageToUI(role, content) {
+            const chatEl = document.getElementById('chat');
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${role}`;
+            
+            messageEl.innerHTML = `
+                <div class="message-content">${content}</div>
+            `;
+            
+            chatEl.appendChild(messageEl);
+            chatEl.scrollTop = chatEl.scrollHeight;
+        }
+
+        // Handle keyboard shortcuts
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Auto-resize textarea
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        // User menu functions
+        function toggleUserMenu() {
+            const userMenu = document.getElementById('userMenu');
+            userMenu.classList.toggle('show');
+        }
+
+        function upgradePlan() {
+            alert('Upgrade plan functionality coming soon!');
+            toggleUserMenu();
+        }
+
+        function openSettings() {
+            alert('Settings functionality coming soon!');
+            toggleUserMenu();
+        }
+
+        function openHelp() {
+            alert('Help functionality coming soon!');
+            toggleUserMenu();
+        }
+
+        function logout() {
+            removeAuthToken(); // Use the function from config.js
+            window.location.href = '/login/';
+        }
+
+        // Mobile sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Close user menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenu = document.getElementById('userMenu');
+            const userInfo = document.querySelector('.user-info');
+            
+            if (!userInfo.contains(event.target)) {
+                userMenu.classList.remove('show');
+            }
+        });
+
+        // Close mobile sidebar when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(event.target) && 
+                !mobileMenuBtn.contains(event.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+    </script>
+</body>
+</html>
