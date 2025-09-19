@@ -652,8 +652,8 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('🚀 EezLegal Dashboard initializing...');
             
-            // Check authentication
-            const token = localStorage.getItem('eezlegal_token');
+            // Check authentication using the original token key
+            const token = getAuthToken(); // Use the function from config.js
             if (!token) {
                 console.log('❌ No token found, redirecting to login');
                 window.location.href = '/login/';
@@ -678,7 +678,7 @@
                     console.log('✅ Dashboard initialized successfully');
                 } else {
                     console.log('❌ Token invalid, redirecting to login');
-                    localStorage.removeItem('eezlegal_token');
+                    removeAuthToken(); // Use the function from config.js
                     window.location.href = '/login/';
                 }
             } catch (error) {
@@ -719,7 +719,7 @@
         // Load chat history
         async function loadChatHistory() {
             try {
-                const token = localStorage.getItem('eezlegal_token');
+                const token = getAuthToken();
                 const response = await fetch(`${BACKEND_URL}/api/chats`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -769,7 +769,7 @@
         // Load specific chat
         async function loadChat(chatId) {
             try {
-                const token = localStorage.getItem('eezlegal_token');
+                const token = getAuthToken();
                 const response = await fetch(`${BACKEND_URL}/api/chats/${chatId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -839,7 +839,7 @@
             document.getElementById('loadingIndicator').style.display = 'flex';
 
             try {
-                const token = localStorage.getItem('eezlegal_token');
+                const token = getAuthToken();
                 const response = await fetch(`${BACKEND_URL}/api/chat`, {
                     method: 'POST',
                     headers: {
@@ -925,7 +925,7 @@
         }
 
         function logout() {
-            localStorage.removeItem('eezlegal_token');
+            removeAuthToken(); // Use the function from config.js
             window.location.href = '/login/';
         }
 
