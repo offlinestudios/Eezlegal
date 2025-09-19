@@ -652,7 +652,18 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('🚀 EezLegal Dashboard initializing...');
             
-            // Check authentication using the original token key
+            // First, check for token in URL parameter (from OAuth callback)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlToken = urlParams.get('token');
+            
+            if (urlToken) {
+                console.log('✅ Token received from OAuth callback');
+                setAuthToken(urlToken); // Store the token
+                // Clean the URL to remove the token parameter
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
+            // Check authentication using the stored token
             const token = getAuthToken(); // Use the function from config.js
             if (!token) {
                 console.log('❌ No token found, redirecting to login');
