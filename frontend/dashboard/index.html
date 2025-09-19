@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EezLegal Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='4' fill='%232d333a'/><text x='12' y='16' text-anchor='middle' fill='white' font-family='system-ui' font-weight='600' font-size='12'>E</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="../config.js"></script>
     <style>
@@ -265,26 +266,25 @@
             font-weight: 600;
         }
 
-        /* Chat Container */
+        /* Chat Container - Centered like landing page */
         .chat-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 0 clamp(16px, 4vw, 28px);
-            overflow-y: auto;
+            align-items: center;
+            justify-content: center;
+            padding: 40px clamp(16px, 4vw, 28px);
+            text-align: center;
+            max-width: 720px;
+            margin: 0 auto;
+            width: 100%;
         }
 
         /* Welcome Section */
         .welcome-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            display: block;
             text-align: center;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 0;
+            margin-bottom: 36px;
         }
 
         .welcome-section.hidden {
@@ -292,26 +292,31 @@
         }
 
         .title {
-            font-size: clamp(24px, 4vw, 32px);
-            font-weight: 600;
-            letter-spacing: -0.01em;
+            font-size: clamp(36px, 6vw, 56px);
+            font-weight: 700;
+            letter-spacing: -0.02em;
             color: var(--text);
-            margin: 0 0 24px;
+            margin: 0 0 36px;
             text-align: center;
         }
 
         /* Chat Messages */
         .chat {
-            flex: 1;
-            padding: 20px 0;
             display: none;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+            width: 100%;
+        }
+
+        .chat:not(:empty) {
+            display: flex;
         }
 
         .message {
             display: flex;
             gap: 12px;
             max-width: 100%;
-            margin-bottom: 16px;
         }
 
         .message.user {
@@ -342,12 +347,10 @@
             border-bottom-left-radius: 4px;
         }
 
-        /* Composer Section - Keep original positioning */
+        /* Composer Section - Centered like landing page */
         .composer-section {
             width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 24px 0;
+            max-width: 720px;
         }
 
         .composer {
@@ -381,6 +384,27 @@
 
         .composer-input::placeholder {
             color: var(--text-dim);
+        }
+
+        .voice-button {
+            background: var(--surface-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .voice-button:hover {
+            background: var(--surface);
         }
 
         .send-button {
@@ -571,7 +595,7 @@
                 </button>
             </div>
 
-            <!-- Chat Container -->
+            <!-- Chat Container - Centered like landing page -->
             <div class="chat-container">
                 <!-- Welcome section (shown when no active chat) -->
                 <div class="welcome-section" id="welcomeSection">
@@ -583,19 +607,20 @@
                     <!-- Messages will be added here -->
                 </div>
 
-                <!-- Composer - Keep original positioning at bottom -->
+                <!-- Composer - Same as landing page with Voice/Send toggle -->
                 <div class="composer-section">
                     <div class="composer">
                         <textarea 
                             class="composer-input" 
                             id="messageInput" 
-                            placeholder="Type here" 
+                            placeholder="Tell us your legal problem..." 
                             rows="1"
                             onkeydown="handleKeyDown(event)"
                             oninput="adjustTextareaHeight(this); toggleSendButton()"
                         ></textarea>
-                        <button class="send-button" id="sendButton" onclick="sendMessage()" disabled>
-                            <i class="fas fa-paper-plane"></i>
+                        <button class="voice-button" id="voiceButton" onclick="handleVoiceClick()">
+                            <i class="fas fa-microphone"></i>
+                            <span>Voice</span>
                         </button>
                     </div>
                     
@@ -734,6 +759,9 @@
             document.getElementById('chat').innerHTML = '';
             document.getElementById('welcomeSection').classList.remove('hidden');
             
+            // Reset composer to voice mode
+            resetComposerToVoice();
+            
             // Update chat history UI to remove active state
             updateChatHistoryUI();
         }
@@ -761,7 +789,7 @@
                     // Hide welcome section and show chat
                     document.getElementById('welcomeSection').classList.add('hidden');
                     const chatEl = document.getElementById('chat');
-                    chatEl.style.display = 'block';
+                    chatEl.style.display = 'flex';
                     
                     // Display messages
                     chatEl.innerHTML = chatData.messages.map(msg => `
@@ -781,6 +809,42 @@
             }
         }
 
+        // Toggle between Voice and Send button
+        function toggleSendButton() {
+            const input = document.getElementById('messageInput');
+            const button = document.getElementById('voiceButton');
+            
+            if (input.value.trim()) {
+                // Show send button
+                button.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                button.className = 'send-button';
+                button.onclick = sendMessage;
+            } else {
+                // Show voice button
+                button.innerHTML = '<i class="fas fa-microphone"></i><span>Voice</span>';
+                button.className = 'voice-button';
+                button.onclick = handleVoiceClick;
+            }
+        }
+
+        // Reset composer to voice mode
+        function resetComposerToVoice() {
+            const input = document.getElementById('messageInput');
+            const button = document.getElementById('voiceButton');
+            
+            input.value = '';
+            button.innerHTML = '<i class="fas fa-microphone"></i><span>Voice</span>';
+            button.className = 'voice-button';
+            button.onclick = handleVoiceClick;
+            adjustTextareaHeight(input);
+        }
+
+        // Handle voice button click
+        function handleVoiceClick() {
+            console.log('Voice button clicked');
+            // Placeholder for voice functionality
+        }
+
         // Send message
         async function sendMessage() {
             const input = document.getElementById('messageInput');
@@ -788,17 +852,15 @@
             
             if (!message) return;
 
-            // Clear input and disable send button
-            input.value = '';
-            toggleSendButton();
-            adjustTextareaHeight(input);
+            // Clear input and reset to voice mode
+            resetComposerToVoice();
 
             // Hide welcome section if visible
             document.getElementById('welcomeSection').classList.add('hidden');
             
             // Show chat area
             const chatEl = document.getElementById('chat');
-            chatEl.style.display = 'block';
+            chatEl.style.display = 'flex';
 
             // Add user message to UI
             const userMessageEl = document.createElement('div');
@@ -891,7 +953,10 @@
         function handleKeyDown(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
-                sendMessage();
+                const input = document.getElementById('messageInput');
+                if (input.value.trim()) {
+                    sendMessage();
+                }
             }
         }
 
@@ -899,13 +964,6 @@
         function adjustTextareaHeight(textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-        }
-
-        // Toggle send button state
-        function toggleSendButton() {
-            const input = document.getElementById('messageInput');
-            const button = document.getElementById('sendButton');
-            button.disabled = !input.value.trim();
         }
 
         // Toggle sidebar (mobile)
