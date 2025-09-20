@@ -1,71 +1,82 @@
-import os
-import uvicorn
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from authlib.integrations.starlette_client import OAuth
+from starlette.middleware.sessions import SessionMiddleware
 import jwt
 import sqlite3
 import json
+import os
 from datetime import datetime, timedelta
+import httpx
+from openai import AsyncOpenAI
 import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="EezLegal API")
+app = FastAPI()
+
+# Add session middleware
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "your-secret-key-here"))
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://www.eezlegal.com", "https://eezlegal.com", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Environment variables
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://www.eezlegal.com")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# OAuth setup
+oauth = OAuth()
+oauth.register(
+    name='google',
+    client_id=os.getenv('GOOGLE_CLIENT_ID'),
+    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid_configuration',
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
+
+# OpenAI setup
+openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# JWT settings
+JWT_SECRET = os.getenv("JWT_SECRET", "your-jwt-secret-key")
+JWT_ALGORITHM = "HS256"
+
+# Security
+security = HTTPBearer()
 
 # Database setup
 def init_db():
     conn = sqlite3.connect('eezlegal.db')
     cursor = conn.cursor()
     
-    # Users table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
-            id TEXT PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT UNIQUE NOT NULL,
             name TEXT NOT NULL,
-            picture TEXT,
+            google_id TEXT UNIQUE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     
-    # Chats table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS chats (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            title TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
-    
-    # Messages table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            chat_id TEXT NOT NULL,
-            role TEXT NOT NULL,
-            content TEXT NOT NULL,
+            user_id INTEGER NOT NULL,
+            title TEXT,
+            messages TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (chat_id) REFERENCES chats (id)
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
     
@@ -75,200 +86,151 @@ def init_db():
 # Initialize database
 init_db()
 
-# Pydantic models
-class ChatMessage(BaseModel):
-    message: str
-    chat_id: str = None
+def create_jwt_token(user_data):
+    payload = {
+        "user_id": user_data["id"],
+        "email": user_data["email"],
+        "exp": datetime.utcnow() + timedelta(days=7)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
-class TokenRequest(BaseModel):
-    token: str
+def verify_jwt_token(token: str):
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
-# Health check
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    payload = verify_jwt_token(token)
+    return payload
+
+@app.get("/")
+async def root():
+    return {"message": "EezLegal API is running", "status": "healthy"}
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
-# Root endpoint
-@app.get("/")
-async def root():
-    return {"message": "EezLegal API is running", "status": "ok"}
-
-# OAuth callback (simplified)
-@app.get("/auth/google/callback")
-async def google_callback(code: str = None, state: str = None):
+@app.get("/auth/google")
+async def google_auth(request: Request):
     try:
-        # For now, create a demo user
-        user_data = {
-            "id": "demo_user",
-            "email": "demo@eezlegal.com", 
-            "name": "Demo User",
-            "picture": None
-        }
+        redirect_uri = f"{request.base_url}auth/callback"
+        return await oauth.google.authorize_redirect(request, redirect_uri)
+    except Exception as e:
+        logger.error(f"Google auth error: {e}")
+        raise HTTPException(status_code=500, detail="Authentication failed")
+
+@app.get("/auth/callback")
+async def google_callback(request: Request):
+    try:
+        token = await oauth.google.authorize_access_token(request)
+        user_info = token.get('userinfo')
         
-        # Create JWT token
-        token_data = {
-            "user_id": user_data["id"],
-            "email": user_data["email"],
-            "exp": datetime.utcnow() + timedelta(days=30)
-        }
+        if not user_info:
+            raise HTTPException(status_code=400, detail="Failed to get user info")
         
-        token = jwt.encode(token_data, SECRET_KEY, algorithm="HS256")
-        
-        # Store user in database
+        # Store or update user in database
         conn = sqlite3.connect('eezlegal.db')
         cursor = conn.cursor()
-        cursor.execute('''
-            INSERT OR REPLACE INTO users (id, email, name, picture)
-            VALUES (?, ?, ?, ?)
-        ''', (user_data["id"], user_data["email"], user_data["name"], user_data["picture"]))
+        
+        cursor.execute(
+            "INSERT OR REPLACE INTO users (email, name, google_id) VALUES (?, ?, ?)",
+            (user_info['email'], user_info['name'], user_info['sub'])
+        )
+        
+        cursor.execute("SELECT id, email, name FROM users WHERE email = ?", (user_info['email'],))
+        user = cursor.fetchone()
         conn.commit()
         conn.close()
+        
+        if not user:
+            raise HTTPException(status_code=500, detail="Failed to create user")
+        
+        user_data = {"id": user[0], "email": user[1], "name": user[2]}
+        jwt_token = create_jwt_token(user_data)
         
         # Redirect to dashboard with token
-        return RedirectResponse(url=f"{FRONTEND_URL}/dashboard/?token={token}")
+        frontend_url = os.getenv("FRONTEND_URL", "https://www.eezlegal.com")
+        return RedirectResponse(url=f"{frontend_url}/dashboard/?token={jwt_token}")
         
     except Exception as e:
-        logger.error(f"OAuth callback error: {e}")
-        return RedirectResponse(url=f"{FRONTEND_URL}/login/?error=auth_failed")
+        logger.error(f"Callback error: {e}")
+        frontend_url = os.getenv("FRONTEND_URL", "https://www.eezlegal.com")
+        return RedirectResponse(url=f"{frontend_url}/login/?error=auth_failed")
 
-# Verify token
-@app.post("/api/auth/verify")
-async def verify_token(request: TokenRequest):
-    try:
-        payload = jwt.decode(request.token, SECRET_KEY, algorithms=["HS256"])
-        
-        # Get user from database
-        conn = sqlite3.connect('eezlegal.db')
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM users WHERE id = ?', (payload["user_id"],))
-        user_row = cursor.fetchone()
-        conn.close()
-        
-        if user_row:
-            user = {
-                "id": user_row[0],
-                "email": user_row[1], 
-                "name": user_row[2],
-                "picture": user_row[3]
-            }
-            return {"valid": True, "user": user}
-        else:
-            return {"valid": False}
-            
-    except jwt.ExpiredSignatureError:
-        return {"valid": False, "error": "Token expired"}
-    except jwt.InvalidTokenError:
-        return {"valid": False, "error": "Invalid token"}
-
-# Chat endpoint
 @app.post("/api/chat")
-async def chat_endpoint(message: ChatMessage, request: Request):
+async def chat_endpoint(request: Request, current_user: dict = Depends(get_current_user)):
     try:
-        # Get user from token (simplified)
-        auth_header = request.headers.get("authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-            try:
-                payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-                user_id = payload["user_id"]
-            except:
-                user_id = "demo_user"
-        else:
-            user_id = "demo_user"
+        data = await request.json()
+        message = data.get("message", "").strip()
         
-        # Create or get chat
-        conn = sqlite3.connect('eezlegal.db')
-        cursor = conn.cursor()
+        if not message:
+            raise HTTPException(status_code=400, detail="Message is required")
         
-        if message.chat_id:
-            chat_id = message.chat_id
-        else:
-            # Create new chat
-            import uuid
-            chat_id = str(uuid.uuid4())
-            title = message.message[:50] + "..." if len(message.message) > 50 else message.message
+        # Get AI response
+        try:
+            response = await openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a helpful legal assistant. Provide professional legal guidance while noting that this is not formal legal advice and users should consult with qualified attorneys for specific legal matters."},
+                    {"role": "user", "content": message}
+                ],
+                max_tokens=1000,
+                temperature=0.7
+            )
             
-            cursor.execute('''
-                INSERT INTO chats (id, user_id, title)
-                VALUES (?, ?, ?)
-            ''', (chat_id, user_id, title))
+            ai_response = response.choices[0].message.content
+            
+        except Exception as openai_error:
+            logger.error(f"OpenAI error: {openai_error}")
+            ai_response = "I apologize, but I'm currently experiencing technical difficulties. Please try again in a moment, or contact support if the issue persists."
         
-        # Save user message
-        cursor.execute('''
-            INSERT INTO messages (chat_id, role, content)
-            VALUES (?, ?, ?)
-        ''', (chat_id, "user", message.message))
+        # Store chat in database
+        try:
+            conn = sqlite3.connect('eezlegal.db')
+            cursor = conn.cursor()
+            
+            chat_messages = [
+                {"role": "user", "content": message, "timestamp": datetime.utcnow().isoformat()},
+                {"role": "assistant", "content": ai_response, "timestamp": datetime.utcnow().isoformat()}
+            ]
+            
+            cursor.execute(
+                "INSERT INTO chats (user_id, title, messages) VALUES (?, ?, ?)",
+                (current_user["user_id"], message[:50] + "..." if len(message) > 50 else message, json.dumps(chat_messages))
+            )
+            
+            conn.commit()
+            conn.close()
+            
+        except Exception as db_error:
+            logger.error(f"Database error: {db_error}")
+            # Continue even if database fails
         
-        # Generate AI response (fallback if OpenAI fails)
-        ai_response = "I'm here to help with your legal questions. However, I'm currently experiencing some technical difficulties with my AI service. Please try again in a moment, or contact support if the issue persists."
-        
-        # Try OpenAI if available
-        if OPENAI_API_KEY:
-            try:
-                import openai
-                client = openai.OpenAI(api_key=OPENAI_API_KEY)
-                
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {"role": "system", "content": "You are EezLegal, a professional AI legal assistant. Provide helpful, accurate legal guidance while reminding users to consult with qualified attorneys for specific legal matters."},
-                        {"role": "user", "content": message.message}
-                    ],
-                    max_tokens=500,
-                    temperature=0.7
-                )
-                
-                ai_response = response.choices[0].message.content
-                
-            except Exception as e:
-                logger.error(f"OpenAI error: {e}")
-                # Keep fallback response
-        
-        # Save AI response
-        cursor.execute('''
-            INSERT INTO messages (chat_id, role, content)
-            VALUES (?, ?, ?)
-        ''', (chat_id, "assistant", ai_response))
-        
-        conn.commit()
-        conn.close()
-        
-        return {
-            "status": "success",
+        return JSONResponse({
             "response": ai_response,
-            "chat_id": chat_id
-        }
+            "status": "success"
+        })
         
     except Exception as e:
         logger.error(f"Chat error: {e}")
-        return {
-            "status": "error",
-            "message": "Sorry, I encountered an error. Please try again."
-        }
+        raise HTTPException(status_code=500, detail="Failed to process chat message")
 
-# Get chats
 @app.get("/api/chats")
-async def get_chats(request: Request):
+async def get_chats(current_user: dict = Depends(get_current_user)):
     try:
-        # Get user from token (simplified)
-        auth_header = request.headers.get("authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-            try:
-                payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-                user_id = payload["user_id"]
-            except:
-                user_id = "demo_user"
-        else:
-            user_id = "demo_user"
-        
         conn = sqlite3.connect('eezlegal.db')
         cursor = conn.cursor()
-        cursor.execute('''
-            SELECT id, title, created_at FROM chats 
-            WHERE user_id = ? 
-            ORDER BY created_at DESC
-        ''', (user_id,))
+        
+        cursor.execute(
+            "SELECT id, title, created_at FROM chats WHERE user_id = ? ORDER BY updated_at DESC",
+            (current_user["user_id"],)
+        )
         
         chats = []
         for row in cursor.fetchall():
@@ -279,39 +241,13 @@ async def get_chats(request: Request):
             })
         
         conn.close()
-        return chats
+        return JSONResponse({"chats": chats})
         
     except Exception as e:
         logger.error(f"Get chats error: {e}")
-        return []
-
-# Get specific chat
-@app.get("/api/chats/{chat_id}")
-async def get_chat(chat_id: str, request: Request):
-    try:
-        conn = sqlite3.connect('eezlegal.db')
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT role, content, created_at FROM messages 
-            WHERE chat_id = ? 
-            ORDER BY created_at ASC
-        ''', (chat_id,))
-        
-        messages = []
-        for row in cursor.fetchall():
-            messages.append({
-                "role": row[0],
-                "content": row[1],
-                "created_at": row[2]
-            })
-        
-        conn.close()
-        return {"messages": messages}
-        
-    except Exception as e:
-        logger.error(f"Get chat error: {e}")
-        return {"messages": []}
+        raise HTTPException(status_code=500, detail="Failed to retrieve chats")
 
 if __name__ == "__main__":
+    import uvicorn
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
