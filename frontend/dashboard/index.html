@@ -45,6 +45,7 @@
             flex-direction: column;
             height: 100vh;
             position: relative;
+            transition: transform 0.3s ease;
         }
         
         .sidebar::after {
@@ -55,6 +56,10 @@
             width: 1px;
             height: 100%;
             background: var(--border);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
         }
 
         /* Sidebar Header - Logo and Collapse */
@@ -227,12 +232,59 @@
             color: var(--text-dim);
         }
 
+        /* User Menu Dropdown */
+        .user-menu {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 8px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .user-menu.show {
+            display: block;
+        }
+
+        .user-menu-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text);
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-menu-item:hover {
+            background: var(--surface-2);
+        }
+
+        .user-menu-item:first-child {
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+
+        .user-menu-item:last-child {
+            border-radius: 0 0 var(--radius) var(--radius);
+        }
+
         /* Main Content Area */
         .main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
             height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.sidebar-collapsed {
+            margin-left: 0;
         }
 
         /* Header - EezLegal Title (no border line) */
@@ -243,6 +295,28 @@
             justify-content: space-between;
             padding: 0 var(--pad);
             background: var(--bg);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .mobile-menu-btn:hover {
+            background: var(--surface-2);
+            color: var(--text);
         }
 
         .main-title {
@@ -291,9 +365,10 @@
             display: none;
         }
 
+        /* FIXED: Smaller title to match ChatGPT */
         .title {
-            font-size: clamp(36px, 6vw, 56px);
-            font-weight: 700;
+            font-size: 32px;
+            font-weight: 600;
             letter-spacing: -0.02em;
             color: var(--text);
             margin: 0 0 36px;
@@ -489,7 +564,6 @@
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
-                transition: transform 0.3s ease;
                 position: fixed;
                 z-index: 1000;
             }
@@ -500,32 +574,20 @@
 
             .main-content {
                 width: 100%;
+                margin-left: 0 !important;
             }
 
             .mobile-menu-btn {
                 display: block;
-                position: fixed;
-                top: 16px;
-                left: 16px;
-                z-index: 999;
-                background: var(--surface);
-                border: 1px solid var(--border);
-                border-radius: 8px;
-                padding: 8px;
-                cursor: pointer;
             }
 
             .main-header {
-                padding: 0 60px 0 16px;
+                padding: 0 16px;
             }
 
             .chat-container {
                 padding: 70px 16px 24px;
             }
-        }
-
-        .mobile-menu-btn {
-            display: none;
         }
 
         .hidden {
@@ -534,11 +596,6 @@
     </style>
 </head>
 <body>
-    <!-- Mobile menu button -->
-    <button class="mobile-menu-btn" onclick="toggleSidebar()">
-        <i class="fas fa-bars"></i>
-    </button>
-
     <div class="app-container">
         <!-- Sidebar - ChatGPT Style -->
         <div class="sidebar" id="sidebar">
@@ -579,17 +636,42 @@
                             <div class="user-name" id="userName">Loading...</div>
                             <div class="user-email" id="userEmail">Loading...</div>
                         </div>
-                        <i class="fas fa-chevron-up"></i>
+                        <i class="fas fa-chevron-up" id="userMenuIcon"></i>
+                    </div>
+                    
+                    <!-- User Menu Dropdown -->
+                    <div class="user-menu" id="userMenu">
+                        <div class="user-menu-item" onclick="showHelp()">
+                            <i class="fas fa-question-circle"></i>
+                            Help
+                        </div>
+                        <div class="user-menu-item" onclick="showSettings()">
+                            <i class="fas fa-cog"></i>
+                            Settings
+                        </div>
+                        <div class="user-menu-item" onclick="showUpgrade()">
+                            <i class="fas fa-crown"></i>
+                            Upgrade plan
+                        </div>
+                        <div class="user-menu-item" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Log out
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="main-content">
+        <div class="main-content" id="mainContent">
             <!-- Header with EezLegal Title (no border line) -->
             <div class="main-header">
-                <div class="main-title">eezlegal</div>
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="main-title">eezlegal</div>
+                </div>
                 <button class="help-btn" aria-label="Help">
                     <i class="fas fa-question"></i>
                 </button>
@@ -750,6 +832,51 @@
                     <span>${chat.title}</span>
                 </div>
             `).join('');
+        }
+
+        // FIXED: Toggle sidebar function
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            sidebar.classList.toggle('collapsed');
+            sidebar.classList.toggle('open'); // For mobile
+            
+            if (sidebar.classList.contains('collapsed')) {
+                mainContent.classList.add('sidebar-collapsed');
+            } else {
+                mainContent.classList.remove('sidebar-collapsed');
+            }
+        }
+
+        // FIXED: Toggle user menu function
+        function toggleUserMenu() {
+            const userMenu = document.getElementById('userMenu');
+            const userMenuIcon = document.getElementById('userMenuIcon');
+            
+            userMenu.classList.toggle('show');
+            
+            if (userMenu.classList.contains('show')) {
+                userMenuIcon.className = 'fas fa-chevron-down';
+            } else {
+                userMenuIcon.className = 'fas fa-chevron-up';
+            }
+        }
+
+        // User menu functions
+        function showHelp() {
+            alert('Help functionality coming soon!');
+            toggleUserMenu();
+        }
+
+        function showSettings() {
+            alert('Settings functionality coming soon!');
+            toggleUserMenu();
+        }
+
+        function showUpgrade() {
+            alert('Upgrade plan functionality coming soon!');
+            toggleUserMenu();
         }
 
         // Start new chat
@@ -966,23 +1093,21 @@
             textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
         }
 
-        // Toggle sidebar (mobile)
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('open');
-        }
-
-        // Toggle user menu
-        function toggleUserMenu() {
-            // Placeholder for user menu functionality
-            console.log('User menu clicked');
-        }
-
         // Logout function
         function logout() {
             removeAuthToken();
             window.location.href = '/login/';
         }
+
+        // Close user menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const userProfile = document.querySelector('.user-profile');
+            const userMenu = document.getElementById('userMenu');
+            
+            if (!userProfile.contains(event.target) && userMenu.classList.contains('show')) {
+                toggleUserMenu();
+            }
+        });
 
         // Initialize app when page loads
         document.addEventListener('DOMContentLoaded', initializeApp);
