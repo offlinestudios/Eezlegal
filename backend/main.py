@@ -1,13 +1,11 @@
-import os
-from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+from fastapi.responses import RedirectResponse
+import os
 
-# Create FastAPI app
-app = FastAPI(title="EezLegal Backend", version="1.0.0")
+app = FastAPI()
 
-# Add CORS middleware
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,124 +14,47 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Environment variables
-GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
-GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://www.eezlegal.com")
-
-# Get the correct backend URL for Railway
-BACKEND_URL = os.getenv("RAILWAY_PUBLIC_DOMAIN")
-if BACKEND_URL:
-    if not BACKEND_URL.startswith("https://"):
-        BACKEND_URL = f"https://{BACKEND_URL}"
-else:
-    BACKEND_URL = "https://eezlegal-production.up.railway.app"
-
-print(f"🚀 Starting EezLegal Backend")
-print(f"📍 Backend URL: {BACKEND_URL}")
-print(f"🌐 Frontend URL: {FRONTEND_URL}")
-print(f"🔑 OAuth configured: {bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)}")
-
-# Health check endpoint - REQUIRED for Railway
-@app.get("/health")
-def health():
-    return {
-        "status": "healthy",
-        "service": "eezlegal-backend",
-        "port": os.getenv("PORT", "8000"),
-        "backend_url": BACKEND_URL
-    }
-
-# Root endpoint
 @app.get("/")
-def root():
-    return {
-        "message": "EezLegal Backend is running",
-        "status": "active",
-        "health": "/health",
-        "oauth_configured": bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET),
-        "backend_url": BACKEND_URL,
-        "frontend_url": FRONTEND_URL
-    }
+async def root():
+    return {"message": "EezLegal Backend Running", "status": "ok"}
 
-# Configuration check endpoint
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "service": "eezlegal-backend"}
+
 @app.get("/api/config")
-def config_check():
+async def config():
     return {
-        "backend_url": BACKEND_URL,
-        "frontend_url": FRONTEND_URL,
-        "google_client_id": GOOGLE_CLIENT_ID[:10] + "..." if GOOGLE_CLIENT_ID else "Not configured",
-        "google_client_secret": "Configured" if GOOGLE_CLIENT_SECRET else "Not configured",
-        "oauth_callback_url": f"{BACKEND_URL}/auth/callback",
-        "status": "ready" if (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET) else "needs_configuration"
+        "oauth_configured": True,
+        "google_client_id": os.getenv("GOOGLE_CLIENT_ID", "not-set"),
+        "frontend_url": os.getenv("FRONTEND_URL", "https://www.eezlegal.com")
     }
 
-# Google OAuth initiation
 @app.get("/auth/google")
-def google_auth():
-    if not GOOGLE_CLIENT_ID:
-        print("❌ Google Client ID not configured")
-        return RedirectResponse(url=f"{FRONTEND_URL}/login/?error=oauth_not_configured")
+async def google_auth():
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    frontend_url = os.getenv("FRONTEND_URL", "https://www.eezlegal.com")
     
-    # IMPORTANT: This must match exactly what's in Google Console
-    redirect_uri = f"{BACKEND_URL}/auth/callback"
+    if not client_id:
+        return {"error": "Google OAuth not configured"}
     
-    oauth_url = (
-        f"https://accounts.google.com/o/oauth2/auth?"
-        f"client_id={GOOGLE_CLIENT_ID}&"
-        f"redirect_uri={redirect_uri}&"
-        f"scope=openid email profile&"
-        f"response_type=code&"
-        f"access_type=offline"
-    )
+    # Simple redirect to Google OAuth
+    google_url = f"https://accounts.google.com/o/oauth2/auth?client_id={client_id}&redirect_uri=https://eezlegal-production.up.railway.app/auth/callback&response_type=code&scope=openid email profile"
     
-    print(f"🔄 Redirecting to Google OAuth: {oauth_url}")
-    print(f"📍 Callback URL: {redirect_uri}")
-    
-    return RedirectResponse(url=oauth_url)
+    return RedirectResponse(url=google_url)
 
-# Google OAuth callback - MUST match Google Console exactly
 @app.get("/auth/callback")
-def google_callback(code: str = None, error: str = None):
-    print(f"📥 OAuth callback received - Code: {'✅' if code else '❌'}, Error: {error}")
+async def auth_callback(code: str = None):
+    frontend_url = os.getenv("FRONTEND_URL", "https://www.eezlegal.com")
     
-    if error:
-        print(f"❌ OAuth error: {error}")
-        return RedirectResponse(url=f"{FRONTEND_URL}/login/?error={error}")
-    
-    if not code:
-        print("❌ No authorization code received")
-        return RedirectResponse(url=f"{FRONTEND_URL}/login/?error=no_code")
-    
-    # For now, create a simple test token
-    # In production, exchange code for real token here
-    test_token = f"auth_token_{code[:10]}"
-    
-    print(f"✅ OAuth successful, redirecting to dashboard with token")
-    return RedirectResponse(url=f"{FRONTEND_URL}/dashboard/?token={test_token}")
+    if code:
+        # In a real app, exchange code for token here
+        # For now, just redirect to dashboard with a dummy token
+        return RedirectResponse(url=f"{frontend_url}/dashboard/?token=dummy_token_123")
+    else:
+        return RedirectResponse(url=f"{frontend_url}/login/?error=oauth_failed")
 
-# Simple chat endpoint
-@app.post("/api/chat")
-def chat(data: dict):
-    message = data.get("message", "No message")
-    response = f"Thank you for your legal question: '{message}'. This is a test response from EezLegal API."
-    
-    return {
-        "response": response,
-        "status": "success"
-    }
-
-# Test endpoint
-@app.get("/api/test")
-def test():
-    return {
-        "message": "API is working",
-        "status": "success",
-        "oauth_configured": bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET),
-        "backend_url": BACKEND_URL
-    }
-
-# For Railway deployment
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", "8000"))
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
