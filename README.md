@@ -185,3 +185,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 *Making legal help accessible, affordable, and easy to understand.*
 # Trigger deployment
+# Force deployment Fri Oct 10 20:49:34 EDT 2025
