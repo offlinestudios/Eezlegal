@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    // Before building, run pnpm install with --no-frozen-lockfile to refresh the lockfile in CI.
+    "build": "pnpm install --no-frozen-lockfile && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
