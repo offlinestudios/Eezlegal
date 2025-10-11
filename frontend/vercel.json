@@ -15,15 +15,5 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "env": {
-    "VITE_BACKEND_URL": "@backend_url",
-    "VITE_STRIPE_PUBLISHABLE_KEY": "@stripe_key"
-  },
-  "build": {
-    "env": {
-      "VITE_BACKEND_URL": "@backend_url",
-      "VITE_STRIPE_PUBLISHABLE_KEY": "@stripe_key"
-    }
-  }
+  ]
 }
