@@ -3,17 +3,14 @@
   "name": "eezlegal",
   "builds": [
     {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "frontend/dist"
-      }
+      "src": "frontend/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/frontend/index.html"
+      "dest": "/frontend/$1"
     }
   ]
 }
