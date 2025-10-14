@@ -1,17 +1,16 @@
-import React, { useState, useCallback } from 'react';
-// Fixed input functionality - v3.0 - Complete rewrite
+import React, { useState } from 'react';
 import { Shield, Send, Paperclip, Menu, X, Settings, User, LogOut } from 'lucide-react';
 
 const EezLegalApp = () => {
-  // Core state management
+  // Core state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
-  // Input state - using useCallback to ensure proper handling
-  const [inputValue, setInputValue] = useState('');
+  // Input state - simple string state
+  const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]);
   const [chatHistory, setChatHistory] = useState([]);
 
@@ -21,24 +20,23 @@ const EezLegalApp = () => {
   const [showThemeDropdown, setShowThemeDropdown] = useState(false);
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
 
-  // Input handlers with useCallback for stability
-  const handleInputChange = useCallback((e) => {
-    const value = e.target.value;
-    setInputValue(value);
-  }, []);
+  // Simple input handler
+  const handleInputChange = (e) => {
+    setInputText(e.target.value);
+  };
 
-  const handleKeyPress = useCallback((e) => {
-    if (e.key === 'Enter' && inputValue.trim()) {
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && inputText.trim()) {
       sendMessage();
     }
-  }, [inputValue]);
+  };
 
-  const sendMessage = useCallback(() => {
-    if (!inputValue.trim()) return;
+  const sendMessage = () => {
+    if (!inputText.trim()) return;
     
     const newMessage = {
       id: Date.now(),
-      text: inputValue,
+      text: inputText,
       sender: 'user',
       timestamp: new Date()
     };
@@ -47,11 +45,11 @@ const EezLegalApp = () => {
     
     // Add to chat history if it's a new conversation
     if (messages.length === 0) {
-      const chatTitle = inputValue.length > 30 ? inputValue.substring(0, 30) + '...' : inputValue;
+      const chatTitle = inputText.length > 30 ? inputText.substring(0, 30) + '...' : inputText;
       setChatHistory(prev => [chatTitle, ...prev]);
     }
     
-    setInputValue(''); // Clear input
+    setInputText(''); // Clear input
     
     // Simulate AI response
     setTimeout(() => {
@@ -63,7 +61,7 @@ const EezLegalApp = () => {
       };
       setMessages(prev => [...prev, aiResponse]);
     }, 1000);
-  }, [inputValue, messages.length]);
+  };
 
   // OAuth handlers
   const handleOAuthLogin = (provider) => {
@@ -91,60 +89,11 @@ const EezLegalApp = () => {
     setIsLoggedIn(false);
     setMessages([]);
     setChatHistory([]);
-    setInputValue('');
+    setInputText('');
     setShowUserMenu(false);
   };
 
-  // Composer Component - Reusable input component
-  const ComposerInput = ({ placeholder, onSend, className = "" }) => (
-    <div className={`composer-container ${className}`} style={{
-      position: 'relative',
-      display: 'flex',
-      alignItems: 'center',
-      width: '100%'
-    }}>
-      <input
-        type="text"
-        placeholder={placeholder}
-        value={inputValue}
-        onChange={handleInputChange}
-        onKeyPress={handleKeyPress}
-        style={{
-          width: '100%',
-          padding: '1rem 3rem 1rem 1rem',
-          border: '1px solid #d1d5db',
-          borderRadius: '1.5rem',
-          fontSize: '1rem',
-          outline: 'none',
-          fontFamily: 'inherit',
-          boxSizing: 'border-box',
-          backgroundColor: '#ffffff'
-        }}
-      />
-      <button
-        onClick={onSend}
-        disabled={!inputValue.trim()}
-        style={{
-          position: 'absolute',
-          right: '0.5rem',
-          background: inputValue.trim() ? '#000000' : '#e5e7eb',
-          color: '#ffffff',
-          border: 'none',
-          borderRadius: '50%',
-          width: '2rem',
-          height: '2rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: inputValue.trim() ? 'pointer' : 'not-allowed'
-        }}
-      >
-        <Send size={16} />
-      </button>
-    </div>
-  );
-
-  // Homepage Component
+  // Homepage Component - EXACT Figma Match
   const Homepage = () => (
     <div style={{
       minHeight: '100vh',
@@ -153,13 +102,13 @@ const EezLegalApp = () => {
       display: 'flex',
       flexDirection: 'column'
     }}>
-      {/* Header */}
+      {/* Header - NO BORDER as per Figma */}
       <header style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '1rem 2rem',
-        borderBottom: '1px solid #f0f0f0'
+        padding: '1.5rem 2rem'
+        // NO borderBottom - this was the extra line you mentioned
       }}>
         <div style={{
           display: 'flex',
@@ -172,7 +121,7 @@ const EezLegalApp = () => {
           <Shield size={24} />
           Eezlegal
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button
             onClick={() => setShowAuthModal(true)}
             style={{
@@ -183,7 +132,8 @@ const EezLegalApp = () => {
               borderRadius: '0.375rem',
               cursor: 'pointer',
               fontSize: '0.875rem',
-              fontWeight: '500'
+              fontWeight: '500',
+              fontFamily: 'inherit'
             }}
           >
             Login
@@ -198,7 +148,8 @@ const EezLegalApp = () => {
               borderRadius: '0.375rem',
               cursor: 'pointer',
               fontSize: '0.875rem',
-              fontWeight: '500'
+              fontWeight: '500',
+              fontFamily: 'inherit'
             }}
           >
             Sign up
@@ -206,7 +157,7 @@ const EezLegalApp = () => {
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main Content - Exact Figma Layout */}
       <main style={{
         flex: 1,
         display: 'flex',
@@ -222,35 +173,79 @@ const EezLegalApp = () => {
           fontSize: '3rem',
           fontWeight: '600',
           color: '#000000',
-          marginBottom: '3rem',
+          marginBottom: '4rem',
           textAlign: 'center'
         }}>
           Eezlegal
         </h1>
 
+        {/* Composer - Single Rounded Field with Integrated Send Button (Exact Figma) */}
         <div style={{
           width: '100%',
-          maxWidth: '768px',
-          marginBottom: '1rem'
+          maxWidth: '600px',
+          marginBottom: '1.5rem',
+          position: 'relative'
         }}>
-          <ComposerInput 
-            placeholder="Tell us your legal problem..."
-            onSend={sendMessage}
-          />
+          <div style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <input
+              type="text"
+              placeholder="Tell us your legal problem..."
+              value={inputText}
+              onChange={handleInputChange}
+              onKeyPress={handleKeyPress}
+              style={{
+                width: '100%',
+                padding: '1rem 4rem 1rem 1.5rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '2rem', // More rounded as per Figma
+                fontSize: '1rem',
+                outline: 'none',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
+                backgroundColor: '#ffffff'
+              }}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={!inputText.trim()}
+              style={{
+                position: 'absolute',
+                right: '0.75rem',
+                background: inputText.trim() ? '#000000' : '#e5e7eb',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '50%',
+                width: '2.5rem',
+                height: '2.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: inputText.trim() ? 'pointer' : 'not-allowed'
+              }}
+            >
+              <Send size={18} />
+            </button>
+          </div>
         </div>
 
+        {/* Attach Button - Separate as per Figma */}
         <button
           style={{
             background: 'transparent',
             color: '#6b7280',
             border: '1px solid #d1d5db',
-            padding: '0.5rem 1rem',
-            borderRadius: '0.375rem',
+            padding: '0.75rem 1.25rem',
+            borderRadius: '2rem', // Rounded to match input
             cursor: 'pointer',
             fontSize: '0.875rem',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem'
+            gap: '0.5rem',
+            fontFamily: 'inherit'
           }}
         >
           <Paperclip size={16} />
@@ -260,7 +255,7 @@ const EezLegalApp = () => {
     </div>
   );
 
-  // Authentication Modal
+  // Authentication Modal with proper OAuth icons
   const AuthModal = () => {
     const [email, setEmail] = useState('');
 
@@ -280,9 +275,9 @@ const EezLegalApp = () => {
       }}>
         <div style={{
           backgroundColor: '#ffffff',
-          borderRadius: '0.5rem',
+          borderRadius: '0.75rem',
           padding: '2rem',
-          maxWidth: '400px',
+          maxWidth: '420px',
           width: '100%',
           position: 'relative'
         }}>
@@ -318,26 +313,27 @@ const EezLegalApp = () => {
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
+            {/* Google OAuth */}
             <button
               onClick={() => handleOAuthLogin('google')}
               style={{
                 width: '100%',
-                padding: '0.75rem',
+                padding: '0.875rem',
                 border: '1px solid #d1d5db',
-                borderRadius: '0.375rem',
+                borderRadius: '0.5rem',
                 background: '#ffffff',
                 color: '#374151',
                 cursor: 'pointer',
-                marginBottom: '0.5rem',
+                marginBottom: '0.75rem',
                 fontSize: '0.875rem',
                 fontFamily: 'inherit',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.5rem'
+                gap: '0.75rem'
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24">
+              <svg width="20" height="20" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -346,26 +342,27 @@ const EezLegalApp = () => {
               Continue with Google
             </button>
 
+            {/* Microsoft OAuth */}
             <button
               onClick={() => handleOAuthLogin('microsoft')}
               style={{
                 width: '100%',
-                padding: '0.75rem',
+                padding: '0.875rem',
                 border: '1px solid #d1d5db',
-                borderRadius: '0.375rem',
+                borderRadius: '0.5rem',
                 background: '#ffffff',
                 color: '#374151',
                 cursor: 'pointer',
-                marginBottom: '0.5rem',
+                marginBottom: '0.75rem',
                 fontSize: '0.875rem',
                 fontFamily: 'inherit',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.5rem'
+                gap: '0.75rem'
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24">
+              <svg width="20" height="20" viewBox="0 0 24 24">
                 <path fill="#F25022" d="M1 1h10v10H1z"/>
                 <path fill="#00A4EF" d="M13 1h10v10H13z"/>
                 <path fill="#7FBA00" d="M1 13h10v10H1z"/>
@@ -374,51 +371,53 @@ const EezLegalApp = () => {
               Continue with Microsoft
             </button>
 
+            {/* Apple OAuth */}
             <button
               onClick={() => handleOAuthLogin('apple')}
               style={{
                 width: '100%',
-                padding: '0.75rem',
+                padding: '0.875rem',
                 border: '1px solid #d1d5db',
-                borderRadius: '0.375rem',
+                borderRadius: '0.5rem',
                 background: '#ffffff',
                 color: '#374151',
                 cursor: 'pointer',
-                marginBottom: '0.5rem',
+                marginBottom: '0.75rem',
                 fontSize: '0.875rem',
                 fontFamily: 'inherit',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.5rem'
+                gap: '0.75rem'
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24">
+              <svg width="20" height="20" viewBox="0 0 24 24">
                 <path fill="#000000" d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
               </svg>
               Continue with Apple
             </button>
 
+            {/* Phone OAuth */}
             <button
               onClick={() => alert('Phone authentication would be implemented here')}
               style={{
                 width: '100%',
-                padding: '0.75rem',
+                padding: '0.875rem',
                 border: '1px solid #d1d5db',
-                borderRadius: '0.375rem',
+                borderRadius: '0.5rem',
                 background: '#ffffff',
                 color: '#374151',
                 cursor: 'pointer',
-                marginBottom: '0.5rem',
+                marginBottom: '0.75rem',
                 fontSize: '0.875rem',
                 fontFamily: 'inherit',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.5rem'
+                gap: '0.75rem'
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
               </svg>
               Continue with phone
@@ -442,9 +441,9 @@ const EezLegalApp = () => {
             onChange={(e) => setEmail(e.target.value)}
             style={{
               width: '100%',
-              padding: '0.75rem',
+              padding: '0.875rem',
               border: '2px solid #3b82f6',
-              borderRadius: '0.375rem',
+              borderRadius: '0.5rem',
               fontSize: '0.875rem',
               outline: 'none',
               marginBottom: '1rem',
@@ -457,11 +456,11 @@ const EezLegalApp = () => {
             onClick={() => handleEmailLogin(email)}
             style={{
               width: '100%',
-              padding: '0.75rem',
+              padding: '0.875rem',
               backgroundColor: '#000000',
               color: '#ffffff',
               border: 'none',
-              borderRadius: '0.375rem',
+              borderRadius: '0.5rem',
               cursor: 'pointer',
               fontSize: '0.875rem',
               fontWeight: '500',
@@ -475,7 +474,7 @@ const EezLegalApp = () => {
     );
   };
 
-  // Dashboard Component
+  // Dashboard Component (simplified for now)
   const Dashboard = () => (
     <div style={{
       minHeight: '100vh',
@@ -528,7 +527,7 @@ const EezLegalApp = () => {
           <button
             onClick={() => {
               setMessages([]);
-              setInputValue('');
+              setInputText('');
             }}
             style={{
               width: '100%',
@@ -541,7 +540,8 @@ const EezLegalApp = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
-              gap: '0.5rem'
+              gap: '0.5rem',
+              fontFamily: 'inherit'
             }}
           >
             <span style={{ fontSize: '1.25rem' }}>+</span>
@@ -572,7 +572,8 @@ const EezLegalApp = () => {
                   fontSize: '0.875rem',
                   textAlign: 'left',
                   marginBottom: '0.25rem',
-                  color: '#374151'
+                  color: '#374151',
+                  fontFamily: 'inherit'
                 }}
               >
                 {chat}
@@ -599,7 +600,8 @@ const EezLegalApp = () => {
                 fontSize: '0.875rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                gap: '0.5rem',
+                fontFamily: 'inherit'
               }}
             >
               <User size={16} />
@@ -634,7 +636,8 @@ const EezLegalApp = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
-                  textAlign: 'left'
+                  textAlign: 'left',
+                  fontFamily: 'inherit'
                 }}
               >
                 <Settings size={16} />
@@ -652,7 +655,8 @@ const EezLegalApp = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
-                  textAlign: 'left'
+                  textAlign: 'left',
+                  fontFamily: 'inherit'
                 }}
               >
                 <LogOut size={16} />
@@ -686,13 +690,54 @@ const EezLegalApp = () => {
 
             <div style={{
               width: '100%',
-              maxWidth: '768px',
-              marginBottom: '1rem'
+              maxWidth: '600px',
+              marginBottom: '1.5rem',
+              position: 'relative'
             }}>
-              <ComposerInput 
-                placeholder="Tell us your legal problem..."
-                onSend={sendMessage}
-              />
+              <div style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <input
+                  type="text"
+                  placeholder="Tell us your legal problem..."
+                  value={inputText}
+                  onChange={handleInputChange}
+                  onKeyPress={handleKeyPress}
+                  style={{
+                    width: '100%',
+                    padding: '1rem 4rem 1rem 1.5rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '2rem',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                    backgroundColor: '#ffffff'
+                  }}
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={!inputText.trim()}
+                  style={{
+                    position: 'absolute',
+                    right: '0.75rem',
+                    background: inputText.trim() ? '#000000' : '#e5e7eb',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '2.5rem',
+                    height: '2.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: inputText.trim() ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  <Send size={18} />
+                </button>
+              </div>
             </div>
 
             <button
@@ -700,13 +745,14 @@ const EezLegalApp = () => {
                 background: 'transparent',
                 color: '#6b7280',
                 border: '1px solid #d1d5db',
-                padding: '0.5rem 1rem',
-                borderRadius: '0.375rem',
+                padding: '0.75rem 1.25rem',
+                borderRadius: '2rem',
                 cursor: 'pointer',
                 fontSize: '0.875rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                gap: '0.5rem',
+                fontFamily: 'inherit'
               }}
             >
               <Paperclip size={16} />
@@ -754,11 +800,54 @@ const EezLegalApp = () => {
               padding: '1rem 2rem',
               borderTop: '1px solid #e5e7eb'
             }}>
-              <div style={{ marginBottom: '0.5rem' }}>
-                <ComposerInput 
-                  placeholder="Type your message..."
-                  onSend={sendMessage}
-                />
+              <div style={{
+                marginBottom: '0.5rem',
+                position: 'relative'
+              }}>
+                <div style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <input
+                    type="text"
+                    placeholder="Type your message..."
+                    value={inputText}
+                    onChange={handleInputChange}
+                    onKeyPress={handleKeyPress}
+                    style={{
+                      width: '100%',
+                      padding: '1rem 4rem 1rem 1.5rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '2rem',
+                      fontSize: '1rem',
+                      outline: 'none',
+                      fontFamily: 'inherit',
+                      boxSizing: 'border-box',
+                      backgroundColor: '#ffffff'
+                    }}
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={!inputText.trim()}
+                    style={{
+                      position: 'absolute',
+                      right: '0.75rem',
+                      background: inputText.trim() ? '#000000' : '#e5e7eb',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '2.5rem',
+                      height: '2.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: inputText.trim() ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    <Send size={18} />
+                  </button>
+                </div>
               </div>
               
               <button
@@ -766,13 +855,14 @@ const EezLegalApp = () => {
                   background: 'transparent',
                   color: '#6b7280',
                   border: '1px solid #d1d5db',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '0.375rem',
+                  padding: '0.75rem 1.25rem',
+                  borderRadius: '2rem',
                   cursor: 'pointer',
                   fontSize: '0.875rem',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem'
+                  gap: '0.5rem',
+                  fontFamily: 'inherit'
                 }}
               >
                 <Paperclip size={16} />
@@ -785,230 +875,10 @@ const EezLegalApp = () => {
     </div>
   );
 
-  // Settings Modal (simplified)
-  const SettingsModal = () => (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '1rem'
-    }}>
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '0.5rem',
-        width: '100%',
-        maxWidth: '600px',
-        height: '400px',
-        display: 'flex',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          width: '200px',
-          backgroundColor: '#f8f9fa',
-          borderRight: '1px solid #e5e7eb',
-          padding: '1rem'
-        }}>
-          <button
-            onClick={() => setShowSettings(false)}
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              left: '1rem',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            <X size={20} />
-          </button>
-          
-          <div style={{ marginTop: '2rem' }}>
-            <div style={{
-              padding: '0.75rem',
-              backgroundColor: '#e5e7eb',
-              borderRadius: '0.375rem',
-              marginBottom: '0.5rem',
-              fontSize: '0.875rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              <Settings size={16} />
-              General
-            </div>
-          </div>
-        </div>
-
-        <div style={{
-          flex: 1,
-          padding: '2rem'
-        }}>
-          <h2 style={{
-            fontSize: '1.25rem',
-            fontWeight: '600',
-            marginBottom: '2rem'
-          }}>
-            General
-          </h2>
-
-          <div style={{ marginBottom: '2rem' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              marginBottom: '0.5rem'
-            }}>
-              Theme
-            </label>
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setShowThemeDropdown(!showThemeDropdown)}
-                style={{
-                  width: '200px',
-                  padding: '0.75rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  backgroundColor: '#ffffff',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  textAlign: 'left',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-              >
-                {currentTheme}
-                <span>▼</span>
-              </button>
-              
-              {showThemeDropdown && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                  zIndex: 100
-                }}>
-                  {['System', 'Dark', 'Light'].map((theme) => (
-                    <button
-                      key={theme}
-                      onClick={() => {
-                        setCurrentTheme(theme);
-                        setShowThemeDropdown(false);
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '0.875rem',
-                        textAlign: 'left',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                    >
-                      {theme}
-                      {currentTheme === theme && <span>✓</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              marginBottom: '0.5rem'
-            }}>
-              Language
-            </label>
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
-                style={{
-                  width: '200px',
-                  padding: '0.75rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  backgroundColor: '#ffffff',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  textAlign: 'left',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-              >
-                {currentLanguage}
-                <span>▼</span>
-              </button>
-              
-              {showLanguageDropdown && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                  zIndex: 100
-                }}>
-                  {['Auto-detect', 'English (US)', 'Dutch', 'Espanola', 'French'].map((language) => (
-                    <button
-                      key={language}
-                      onClick={() => {
-                        setCurrentLanguage(language);
-                        setShowLanguageDropdown(false);
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '0.875rem',
-                        textAlign: 'left',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                    >
-                      {language}
-                      {currentLanguage === language && <span>✓</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div>
       {isLoggedIn ? <Dashboard /> : <Homepage />}
       {showAuthModal && <AuthModal />}
-      {showSettings && <SettingsModal />}
     </div>
   );
 };
