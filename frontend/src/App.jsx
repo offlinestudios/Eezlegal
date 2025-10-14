@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// Fixed input functionality - v2.0
 import { Shield, Send, Paperclip, Menu, X, Settings, User, LogOut } from 'lucide-react';
 
 const EezLegalApp = () => {
