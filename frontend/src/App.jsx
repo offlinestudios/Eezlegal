@@ -1,86 +1,57 @@
-import React, { useState } from 'react';
-// Fixed input functionality - v2.0
+import React, { useState, useCallback } from 'react';
+// Fixed input functionality - v3.0 - Complete rewrite
 import { Shield, Send, Paperclip, Menu, X, Settings, User, LogOut } from 'lucide-react';
 
 const EezLegalApp = () => {
+  // Core state management
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
+  // Input state - using useCallback to ensure proper handling
+  const [inputValue, setInputValue] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [chatHistory, setChatHistory] = useState([]);
+
+  // Settings state
   const [currentTheme, setCurrentTheme] = useState('Light');
   const [currentLanguage, setCurrentLanguage] = useState('Auto-detect');
   const [showThemeDropdown, setShowThemeDropdown] = useState(false);
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
-  const [chatInput, setChatInput] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [chatHistory, setChatHistory] = useState([]);
-  const [activeChat, setActiveChat] = useState(null);
 
-  // Handle OAuth login - redirect to actual OAuth providers
-  const handleOAuthLogin = (provider) => {
-    const oauthUrls = {
-      google: 'https://accounts.google.com/oauth/authorize?client_id=your-client-id&redirect_uri=your-redirect&scope=openid%20email%20profile&response_type=code',
-      microsoft: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=your-client-id&response_type=code&redirect_uri=your-redirect&scope=openid%20email%20profile',
-      apple: 'https://appleid.apple.com/auth/authorize?client_id=your-client-id&redirect_uri=your-redirect&response_type=code&scope=name%20email'
-    };
-    
-    if (oauthUrls[provider]) {
-      // In a real implementation, this would redirect to the OAuth provider
-      window.open(oauthUrls[provider], '_blank');
+  // Input handlers with useCallback for stability
+  const handleInputChange = useCallback((e) => {
+    const value = e.target.value;
+    setInputValue(value);
+  }, []);
+
+  const handleKeyPress = useCallback((e) => {
+    if (e.key === 'Enter' && inputValue.trim()) {
+      sendMessage();
     }
-  };
+  }, [inputValue]);
 
-  // Handle phone authentication
-  const handlePhoneAuth = () => {
-    // In a real implementation, this would open a phone verification modal
-    alert('Phone authentication would be implemented here');
-  };
-
-  // Handle email login
-  const handleEmailLogin = (email) => {
-    if (email && email.includes('@')) {
-      setIsLoggedIn(true);
-      setShowAuthModal(false);
-      setShowWelcomeModal(false);
-    } else {
-      alert('Please enter a valid email address');
-    }
-  };
-
-  // Handle logout
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setShowLogoutModal(false);
-    setMessages([]);
-    setActiveChat(null);
-    setChatHistory([]);
-    setChatInput('');
-  };
-
-  // Send message
-  const sendMessage = () => {
-    if (!chatInput.trim()) return;
+  const sendMessage = useCallback(() => {
+    if (!inputValue.trim()) return;
     
     const newMessage = {
       id: Date.now(),
-      text: chatInput,
+      text: inputValue,
       sender: 'user',
       timestamp: new Date()
     };
     
-    const updatedMessages = [...messages, newMessage];
-    setMessages(updatedMessages);
+    setMessages(prev => [...prev, newMessage]);
     
     // Add to chat history if it's a new conversation
     if (messages.length === 0) {
-      const chatTitle = chatInput.length > 30 ? chatInput.substring(0, 30) + '...' : chatInput;
+      const chatTitle = inputValue.length > 30 ? inputValue.substring(0, 30) + '...' : inputValue;
       setChatHistory(prev => [chatTitle, ...prev]);
     }
     
-    setChatInput('');
+    setInputValue(''); // Clear input
     
     // Simulate AI response
     setTimeout(() => {
@@ -92,21 +63,88 @@ const EezLegalApp = () => {
       };
       setMessages(prev => [...prev, aiResponse]);
     }, 1000);
-  };
+  }, [inputValue, messages.length]);
 
-  // Handle input change
-  const handleInputChange = (e) => {
-    setChatInput(e.target.value);
-  };
-
-  // Handle key press
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      sendMessage();
+  // OAuth handlers
+  const handleOAuthLogin = (provider) => {
+    const oauthUrls = {
+      google: 'https://accounts.google.com/oauth/authorize?client_id=your-client-id&redirect_uri=your-redirect&scope=openid%20email%20profile&response_type=code',
+      microsoft: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=your-client-id&response_type=code&redirect_uri=your-redirect&scope=openid%20email%20profile',
+      apple: 'https://appleid.apple.com/auth/authorize?client_id=your-client-id&redirect_uri=your-redirect&response_type=code&scope=name%20email'
+    };
+    
+    if (oauthUrls[provider]) {
+      window.open(oauthUrls[provider], '_blank');
     }
   };
 
-  // Homepage Component - Exact Figma Design
+  const handleEmailLogin = (email) => {
+    if (email && email.includes('@')) {
+      setIsLoggedIn(true);
+      setShowAuthModal(false);
+    } else {
+      alert('Please enter a valid email address');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setMessages([]);
+    setChatHistory([]);
+    setInputValue('');
+    setShowUserMenu(false);
+  };
+
+  // Composer Component - Reusable input component
+  const ComposerInput = ({ placeholder, onSend, className = "" }) => (
+    <div className={`composer-container ${className}`} style={{
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      width: '100%'
+    }}>
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={inputValue}
+        onChange={handleInputChange}
+        onKeyPress={handleKeyPress}
+        style={{
+          width: '100%',
+          padding: '1rem 3rem 1rem 1rem',
+          border: '1px solid #d1d5db',
+          borderRadius: '1.5rem',
+          fontSize: '1rem',
+          outline: 'none',
+          fontFamily: 'inherit',
+          boxSizing: 'border-box',
+          backgroundColor: '#ffffff'
+        }}
+      />
+      <button
+        onClick={onSend}
+        disabled={!inputValue.trim()}
+        style={{
+          position: 'absolute',
+          right: '0.5rem',
+          background: inputValue.trim() ? '#000000' : '#e5e7eb',
+          color: '#ffffff',
+          border: 'none',
+          borderRadius: '50%',
+          width: '2rem',
+          height: '2rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: inputValue.trim() ? 'pointer' : 'not-allowed'
+        }}
+      >
+        <Send size={16} />
+      </button>
+    </div>
+  );
+
+  // Homepage Component
   const Homepage = () => (
     <div style={{
       minHeight: '100vh',
@@ -180,7 +218,6 @@ const EezLegalApp = () => {
         margin: '0 auto',
         width: '100%'
       }}>
-        {/* Title */}
         <h1 style={{
           fontSize: '3rem',
           fontWeight: '600',
@@ -191,58 +228,17 @@ const EezLegalApp = () => {
           Eezlegal
         </h1>
 
-        {/* Composer Interface - Matching Figma Width */}
         <div style={{
           width: '100%',
-          maxWidth: '768px', // Increased to match Figma prototype
+          maxWidth: '768px',
           marginBottom: '1rem'
         }}>
-          <div style={{
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center'
-          }}>
-            <input
-              type="text"
-              placeholder="Tell us your legal problem..."
-              value={chatInput}
-              onChange={handleInputChange}
-              onKeyPress={handleKeyPress}
-              style={{
-                width: '100%',
-                padding: '1rem 3rem 1rem 1rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '1.5rem',
-                fontSize: '1rem',
-                outline: 'none',
-                fontFamily: 'inherit',
-                boxSizing: 'border-box'
-              }}
-            />
-            <button
-              onClick={sendMessage}
-              disabled={!chatInput.trim()}
-              style={{
-                position: 'absolute',
-                right: '0.5rem',
-                background: chatInput.trim() ? '#000000' : '#e5e7eb',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '50%',
-                width: '2rem',
-                height: '2rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: chatInput.trim() ? 'pointer' : 'not-allowed'
-              }}
-            >
-              <Send size={16} />
-            </button>
-          </div>
+          <ComposerInput 
+            placeholder="Tell us your legal problem..."
+            onSend={sendMessage}
+          />
         </div>
 
-        {/* Attach Button */}
         <button
           style={{
             background: 'transparent',
@@ -264,7 +260,7 @@ const EezLegalApp = () => {
     </div>
   );
 
-  // Authentication Modal with Real OAuth Icons
+  // Authentication Modal
   const AuthModal = () => {
     const [email, setEmail] = useState('');
 
@@ -321,7 +317,6 @@ const EezLegalApp = () => {
             </p>
           </div>
 
-          {/* Social Login Buttons with Icons */}
           <div style={{ marginBottom: '1.5rem' }}>
             <button
               onClick={() => handleOAuthLogin('google')}
@@ -405,7 +400,7 @@ const EezLegalApp = () => {
             </button>
 
             <button
-              onClick={handlePhoneAuth}
+              onClick={() => alert('Phone authentication would be implemented here')}
               style={{
                 width: '100%',
                 padding: '0.75rem',
@@ -430,7 +425,6 @@ const EezLegalApp = () => {
             </button>
           </div>
 
-          {/* OR Divider */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -441,7 +435,6 @@ const EezLegalApp = () => {
             <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }}></div>
           </div>
 
-          {/* Email Input */}
           <input
             type="email"
             placeholder="Email address"
@@ -460,7 +453,6 @@ const EezLegalApp = () => {
             }}
           />
 
-          {/* Continue Button */}
           <button
             onClick={() => handleEmailLogin(email)}
             style={{
@@ -483,7 +475,7 @@ const EezLegalApp = () => {
     );
   };
 
-  // Dashboard Component - Only accessible after login
+  // Dashboard Component
   const Dashboard = () => (
     <div style={{
       minHeight: '100vh',
@@ -500,7 +492,6 @@ const EezLegalApp = () => {
         flexDirection: 'column',
         transition: 'width 0.2s ease'
       }}>
-        {/* Sidebar Header */}
         <div style={{
           padding: '1rem',
           borderBottom: '1px solid #e5e7eb',
@@ -533,13 +524,11 @@ const EezLegalApp = () => {
           </button>
         </div>
 
-        {/* New Chat Button */}
         <div style={{ padding: '1rem' }}>
           <button
             onClick={() => {
               setMessages([]);
-              setActiveChat(null);
-              setChatInput('');
+              setInputValue('');
             }}
             style={{
               width: '100%',
@@ -560,27 +549,6 @@ const EezLegalApp = () => {
           </button>
         </div>
 
-        {/* Search - Only show if not collapsed and has chat history */}
-        {!sidebarCollapsed && chatHistory.length > 0 && (
-          <div style={{ padding: '0 1rem 1rem' }}>
-            <input
-              type="text"
-              placeholder="Search chats"
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.375rem',
-                fontSize: '0.875rem',
-                outline: 'none',
-                fontFamily: 'inherit',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
-        )}
-
-        {/* Recent Chats - Only show actual user chats */}
         {!sidebarCollapsed && chatHistory.length > 0 && (
           <div style={{ flex: 1, padding: '0 1rem' }}>
             <h3 style={{
@@ -594,11 +562,10 @@ const EezLegalApp = () => {
             {chatHistory.map((chat, index) => (
               <button
                 key={index}
-                onClick={() => setActiveChat(chat)}
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  backgroundColor: activeChat === chat ? '#e5e7eb' : 'transparent',
+                  backgroundColor: 'transparent',
                   border: 'none',
                   borderRadius: '0.375rem',
                   cursor: 'pointer',
@@ -614,7 +581,6 @@ const EezLegalApp = () => {
           </div>
         )}
 
-        {/* User Menu */}
         <div style={{
           padding: '1rem',
           borderTop: '1px solid #e5e7eb',
@@ -675,10 +641,7 @@ const EezLegalApp = () => {
                 Settings
               </button>
               <button
-                onClick={() => {
-                  setShowLogoutModal(true);
-                  setShowUserMenu(false);
-                }}
+                onClick={handleLogout}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
@@ -703,7 +666,6 @@ const EezLegalApp = () => {
       {/* Main Content */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {messages.length === 0 ? (
-          // Empty State
           <div style={{
             flex: 1,
             display: 'flex',
@@ -724,52 +686,13 @@ const EezLegalApp = () => {
 
             <div style={{
               width: '100%',
-              maxWidth: '768px', // Matching homepage width
+              maxWidth: '768px',
               marginBottom: '1rem'
             }}>
-              <div style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                <input
-                  type="text"
-                  placeholder="Tell us your legal problem..."
-                  value={chatInput}
-                  onChange={handleInputChange}
-                  onKeyPress={handleKeyPress}
-                  style={{
-                    width: '100%',
-                    padding: '1rem 3rem 1rem 1rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '1.5rem',
-                    fontSize: '1rem',
-                    outline: 'none',
-                    fontFamily: 'inherit',
-                    boxSizing: 'border-box'
-                  }}
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={!chatInput.trim()}
-                  style={{
-                    position: 'absolute',
-                    right: '0.5rem',
-                    background: chatInput.trim() ? '#000000' : '#e5e7eb',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '2rem',
-                    height: '2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: chatInput.trim() ? 'pointer' : 'not-allowed'
-                  }}
-                >
-                  <Send size={16} />
-                </button>
-              </div>
+              <ComposerInput 
+                placeholder="Tell us your legal problem..."
+                onSend={sendMessage}
+              />
             </div>
 
             <button
@@ -791,7 +714,6 @@ const EezLegalApp = () => {
             </button>
           </div>
         ) : (
-          // Chat Messages
           <div style={{
             flex: 1,
             display: 'flex',
@@ -828,54 +750,15 @@ const EezLegalApp = () => {
               ))}
             </div>
 
-            {/* Chat Input */}
             <div style={{
               padding: '1rem 2rem',
               borderTop: '1px solid #e5e7eb'
             }}>
-              <div style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                marginBottom: '0.5rem'
-              }}>
-                <input
-                  type="text"
+              <div style={{ marginBottom: '0.5rem' }}>
+                <ComposerInput 
                   placeholder="Type your message..."
-                  value={chatInput}
-                  onChange={handleInputChange}
-                  onKeyPress={handleKeyPress}
-                  style={{
-                    width: '100%',
-                    padding: '1rem 3rem 1rem 1rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '1.5rem',
-                    fontSize: '1rem',
-                    outline: 'none',
-                    fontFamily: 'inherit',
-                    boxSizing: 'border-box'
-                  }}
+                  onSend={sendMessage}
                 />
-                <button
-                  onClick={sendMessage}
-                  disabled={!chatInput.trim()}
-                  style={{
-                    position: 'absolute',
-                    right: '0.5rem',
-                    background: chatInput.trim() ? '#000000' : '#e5e7eb',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '2rem',
-                    height: '2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: chatInput.trim() ? 'pointer' : 'not-allowed'
-                  }}
-                >
-                  <Send size={16} />
-                </button>
               </div>
               
               <button
@@ -902,170 +785,7 @@ const EezLegalApp = () => {
     </div>
   );
 
-  // Welcome Back Modal
-  const WelcomeModal = () => (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '1rem'
-    }}>
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '0.5rem',
-        padding: '2rem',
-        maxWidth: '400px',
-        width: '100%',
-        textAlign: 'center'
-      }}>
-        <h2 style={{
-          fontSize: '1.5rem',
-          fontWeight: '600',
-          marginBottom: '1rem'
-        }}>
-          Welcome Back
-        </h2>
-        <p style={{
-          color: '#6b7280',
-          marginBottom: '2rem',
-          fontSize: '0.875rem'
-        }}>
-          Log in or sign up to get smarter responses, upload files and images, and more.
-        </p>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <button
-            onClick={() => setShowAuthModal(true)}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: '#000000',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: '500'
-            }}
-          >
-            Log In
-          </button>
-          <button
-            onClick={() => setShowAuthModal(true)}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: '#ffffff',
-              color: '#000000',
-              border: '1px solid #d1d5db',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem'
-            }}
-          >
-            Sign up for free
-          </button>
-          <button
-            onClick={() => setShowWelcomeModal(false)}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#6b7280',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              padding: '0.5rem'
-            }}
-          >
-            Stay logged out
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Logout Confirmation Modal
-  const LogoutModal = () => (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '1rem'
-    }}>
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '0.5rem',
-        padding: '2rem',
-        maxWidth: '400px',
-        width: '100%',
-        textAlign: 'center'
-      }}>
-        <h2 style={{
-          fontSize: '1.25rem',
-          fontWeight: '600',
-          marginBottom: '1rem'
-        }}>
-          Are you sure you want to log out?
-        </h2>
-        <p style={{
-          color: '#6b7280',
-          marginBottom: '2rem',
-          fontSize: '0.875rem'
-        }}>
-          Log out of Eezlegal?
-        </p>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <button
-            onClick={handleLogout}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: '#000000',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: '500'
-            }}
-          >
-            Log out
-          </button>
-          <button
-            onClick={() => setShowLogoutModal(false)}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: '#ffffff',
-              color: '#000000',
-              border: '1px solid #d1d5db',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem'
-            }}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Settings Modal
+  // Settings Modal (simplified)
   const SettingsModal = () => (
     <div style={{
       position: 'fixed',
@@ -1089,7 +809,6 @@ const EezLegalApp = () => {
         display: 'flex',
         overflow: 'hidden'
       }}>
-        {/* Settings Sidebar */}
         <div style={{
           width: '200px',
           backgroundColor: '#f8f9fa',
@@ -1124,32 +843,9 @@ const EezLegalApp = () => {
               <Settings size={16} />
               General
             </div>
-            <div style={{
-              padding: '0.75rem',
-              fontSize: '0.875rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              color: '#6b7280'
-            }}>
-              <User size={16} />
-              Account
-            </div>
-            <div style={{
-              padding: '0.75rem',
-              fontSize: '0.875rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              color: '#6b7280'
-            }}>
-              <Shield size={16} />
-              Data Controls
-            </div>
           </div>
         </div>
 
-        {/* Settings Content */}
         <div style={{
           flex: 1,
           padding: '2rem'
@@ -1162,7 +858,6 @@ const EezLegalApp = () => {
             General
           </h2>
 
-          {/* Theme Setting */}
           <div style={{ marginBottom: '2rem' }}>
             <label style={{
               display: 'block',
@@ -1234,7 +929,6 @@ const EezLegalApp = () => {
             </div>
           </div>
 
-          {/* Language Setting */}
           <div>
             <label style={{
               display: 'block',
@@ -1313,10 +1007,7 @@ const EezLegalApp = () => {
   return (
     <div>
       {isLoggedIn ? <Dashboard /> : <Homepage />}
-      
       {showAuthModal && <AuthModal />}
-      {showWelcomeModal && <WelcomeModal />}
-      {showLogoutModal && <LogoutModal />}
       {showSettings && <SettingsModal />}
     </div>
   );
