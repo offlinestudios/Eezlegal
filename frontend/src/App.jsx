@@ -1,253 +1,289 @@
 import React, { useState } from 'react';
+import { Shield, Send, Paperclip, Menu, X, Settings, User, HelpCircle, LogOut } from 'lucide-react';
 
 const EezLegalApp = () => {
-  const [currentPage, setCurrentPage] = useState('home');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState('Light');
+  const [currentLanguage, setCurrentLanguage] = useState('Auto-detect');
+  const [showThemeDropdown, setShowThemeDropdown] = useState(false);
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [activeChat, setActiveChat] = useState(null);
 
-  // Handle window resize for responsive design
-  React.useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // Sample chat history
+  const chatHistory = [
+    'Contract Review Question',
+    'Employer legal issue',
+    'Lease Agreement help',
+    'Business formation strategy'
+  ];
 
-  // Navigation function
-  const navigateTo = (page) => {
-    setCurrentPage(page);
-  };
-
-  // Login function
+  // Handle login
   const handleLogin = () => {
     setIsLoggedIn(true);
-    setCurrentPage('dashboard');
+    setShowAuthModal(false);
     setShowWelcomeModal(false);
   };
 
-  // Logout function
+  // Handle logout
   const handleLogout = () => {
     setIsLoggedIn(false);
-    setCurrentPage('home');
+    setShowLogoutModal(false);
+    setMessages([]);
+    setActiveChat(null);
   };
 
-  // HomePage Component - Professional Landing Page
-  const HomePage = () => (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-      color: 'white',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+  // Send message
+  const sendMessage = () => {
+    if (!chatInput.trim()) return;
+    
+    const newMessage = {
+      id: Date.now(),
+      text: chatInput,
+      sender: 'user',
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, newMessage]);
+    setChatInput('');
+    
+    // Simulate AI response
+    setTimeout(() => {
+      const aiResponse = {
+        id: Date.now() + 1,
+        text: "I can definitely help. Tenant-landlord disputes in Toronto fall under the Residential Tenancies Act (RTA) and are overseen by the Landlord and Tenant Board (LTB). The best way forward depends on the exact issue.\n\nCould you tell me a bit more about the problem? For example:\n\n• Is it about repairs/maintenance (e.g. landlord not fixing something)?\n• Rent issues (increase, late payment, illegal charges, deposits, etc.)?\n• Eviction or pressure to leave?\n• Privacy/harassment(landlord entering without notice, disruptive behavior)?\n• Deposit/last month's rent problems?\n\nThat will let me break down your specific rights under Ontario law, what documentation you should gather, and the practical steps (from sending written notice → to filing with the LTB if needed).\n\nIf you'd like, I can also draft a clear message/letter/email to your landlord citing the law, so you come across firm and professional.\n\nWhat's the specific issue you're facing?",
+        sender: 'ai',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, aiResponse]);
+    }, 1000);
+  };
+
+  // Homepage Component - Exact Figma Design
+  const Homepage = () => (
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#ffffff',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      display: 'flex',
+      flexDirection: 'column'
     }}>
       {/* Header */}
-      <header style={{ 
-        padding: isMobile ? '1rem' : '1rem 2rem', 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <header style={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        flexWrap: 'wrap'
+        padding: '1rem 2rem',
+        borderBottom: '1px solid #f0f0f0'
       }}>
-        <div style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 'bold' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          fontSize: '1.25rem',
+          fontWeight: '600',
+          color: '#000000'
+        }}>
+          <Shield size={24} />
           Eezlegal
         </div>
-        <div style={{ display: 'flex', gap: '1rem', marginTop: isMobile ? '0.5rem' : '0' }}>
-          <button 
-            onClick={() => setShowWelcomeModal(true)}
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button
+            onClick={() => setShowAuthModal(true)}
             style={{
-              background: 'transparent',
-              color: 'white',
-              border: '2px solid white',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: '500'
-            }}
-          >
-            Sign In
-          </button>
-          <button 
-            onClick={() => navigateTo('login')}
-            style={{
-              background: 'white',
-              color: '#667eea',
+              background: '#000000',
+              color: '#ffffff',
               border: 'none',
               padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
+              borderRadius: '0.375rem',
               cursor: 'pointer',
               fontSize: '0.875rem',
               fontWeight: '500'
             }}
           >
-            Get Started
+            Login
+          </button>
+          <button
+            onClick={() => setShowAuthModal(true)}
+            style={{
+              background: 'transparent',
+              color: '#000000',
+              border: '1px solid #e5e5e5',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.375rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: '500'
+            }}
+          >
+            Sign up
           </button>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main style={{ 
-        padding: isMobile ? '2rem 1rem' : '4rem 2rem', 
-        textAlign: 'center', 
-        maxWidth: '800px', 
-        margin: '0 auto' 
+      {/* Main Content */}
+      <main style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem',
+        maxWidth: '800px',
+        margin: '0 auto',
+        width: '100%'
       }}>
-        <h1 style={{ 
-          fontSize: isMobile ? '2rem' : '3rem', 
-          marginBottom: '1rem', 
-          fontWeight: 'bold',
-          lineHeight: '1.2'
+        {/* Title */}
+        <h1 style={{
+          fontSize: '3rem',
+          fontWeight: '600',
+          color: '#000000',
+          marginBottom: '3rem',
+          textAlign: 'center'
         }}>
-          AI Legal Assistant
+          Eezlegal
         </h1>
-        <p style={{ 
-          fontSize: isMobile ? '1rem' : '1.25rem', 
-          marginBottom: '2rem', 
-          opacity: 0.9,
-          lineHeight: '1.6'
-        }}>
-          Get smarter legal responses with document analysis and AI-powered insights. 
-          Upload your files and get instant legal guidance.
-        </p>
-        <div style={{ 
-          display: 'flex', 
-          gap: '1rem', 
-          justifyContent: 'center',
-          flexDirection: isMobile ? 'column' : 'row',
-          alignItems: 'center'
-        }}>
-          <button 
-            onClick={() => navigateTo('login')}
-            style={{
-              background: 'white',
-              color: '#667eea',
-              border: 'none',
-              padding: '1rem 2rem',
-              borderRadius: '0.5rem',
-              cursor: 'pointer',
-              fontSize: '1.1rem',
-              fontWeight: '600',
-              minWidth: isMobile ? '200px' : 'auto'
-            }}
-          >
-            Start Free Trial
-          </button>
-          <button 
-            onClick={() => setShowWelcomeModal(true)}
-            style={{
-              background: 'transparent',
-              color: 'white',
-              border: '2px solid white',
-              padding: '1rem 2rem',
-              borderRadius: '0.5rem',
-              cursor: 'pointer',
-              fontSize: '1.1rem',
-              fontWeight: '600',
-              minWidth: isMobile ? '200px' : 'auto'
-            }}
-          >
-            Sign In
-          </button>
-        </div>
-      </main>
 
-      {/* Features Section */}
-      <section style={{ 
-        padding: '2rem', 
-        maxWidth: '1000px', 
-        margin: '0 auto' 
-      }}>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))', 
-          gap: '2rem' 
+        {/* Composer Interface */}
+        <div style={{
+          width: '100%',
+          maxWidth: '600px',
+          marginBottom: '1rem'
         }}>
-          <div style={{ 
-            background: 'rgba(255,255,255,0.1)', 
-            padding: '1.5rem', 
-            borderRadius: '0.5rem',
-            textAlign: 'left'
+          <div style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center'
           }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>📄 Document Analysis</h3>
-            <p style={{ margin: 0, lineHeight: '1.5' }}>Upload legal documents and get instant AI-powered analysis and insights.</p>
-          </div>
-          <div style={{ 
-            background: 'rgba(255,255,255,0.1)', 
-            padding: '1.5rem', 
-            borderRadius: '0.5rem',
-            textAlign: 'left'
-          }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>💬 Smart Chat</h3>
-            <p style={{ margin: 0, lineHeight: '1.5' }}>Ask legal questions and get intelligent responses from our AI assistant.</p>
-          </div>
-          <div style={{ 
-            background: 'rgba(255,255,255,0.1)', 
-            padding: '1.5rem', 
-            borderRadius: '0.5rem',
-            textAlign: 'left'
-          }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>🔒 Secure & Private</h3>
-            <p style={{ margin: 0, lineHeight: '1.5' }}>Your documents and conversations are encrypted and completely confidential.</p>
+            <input
+              type="text"
+              placeholder="Tell us your legal problem..."
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+              style={{
+                width: '100%',
+                padding: '1rem 3rem 1rem 1rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '1.5rem',
+                fontSize: '1rem',
+                outline: 'none',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box'
+              }}
+            />
+            <button
+              onClick={sendMessage}
+              style={{
+                position: 'absolute',
+                right: '0.5rem',
+                background: '#000000',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '50%',
+                width: '2rem',
+                height: '2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+            >
+              <Send size={16} />
+            </button>
           </div>
         </div>
-      </section>
+
+        {/* Attach Button */}
+        <button
+          style={{
+            background: 'transparent',
+            color: '#6b7280',
+            border: '1px solid #d1d5db',
+            padding: '0.5rem 1rem',
+            borderRadius: '0.375rem',
+            cursor: 'pointer',
+            fontSize: '0.875rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+        >
+          <Paperclip size={16} />
+          Attach
+        </button>
+      </main>
     </div>
   );
 
-  // LoginPage Component - Exact Figma Design
-  const LoginPage = () => (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: '#f8fafc', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      padding: '1rem',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+  // Authentication Modal
+  const AuthModal = () => (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: '1rem'
     }}>
-      <div style={{ 
-        background: 'white', 
-        padding: isMobile ? '1.5rem' : '2rem', 
-        borderRadius: '0.5rem', 
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)', 
-        width: '100%', 
-        maxWidth: '400px' 
+      <div style={{
+        backgroundColor: '#ffffff',
+        borderRadius: '0.5rem',
+        padding: '2rem',
+        maxWidth: '400px',
+        width: '100%',
+        position: 'relative'
       }}>
-        {/* Header */}
+        <button
+          onClick={() => setShowAuthModal(false)}
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          <X size={20} />
+        </button>
+
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ 
-            fontSize: '1.5rem', 
-            fontWeight: 'bold', 
-            color: '#1f2937', 
-            marginBottom: '0.5rem',
-            margin: '0 0 0.5rem 0'
-          }}>
-            Eezlegal
-          </h1>
-          <h2 style={{ 
-            fontSize: '1.25rem', 
-            color: '#374151', 
-            marginBottom: '0.5rem',
-            margin: '0 0 0.5rem 0'
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: '600',
+            color: '#000000',
+            marginBottom: '0.5rem'
           }}>
             Login or sign up
           </h2>
-          <p style={{ 
-            color: '#6b7280', 
-            fontSize: '0.875rem',
-            margin: 0,
-            lineHeight: '1.4'
+          <p style={{
+            color: '#6b7280',
+            fontSize: '0.875rem'
           }}>
-            Get smarter responses by uploading and chatting with your files
+            You'll get smarter responses and can upload files, images, and more.
           </p>
         </div>
 
         {/* Social Login Buttons */}
         <div style={{ marginBottom: '1.5rem' }}>
           {[
-            { icon: '🔍', text: 'Continue with Google' },
-            { icon: '⊞', text: 'Continue with Microsoft' },
-            { icon: '🍎', text: 'Continue with Apple' },
-            { icon: '📞', text: 'Continue with phone' }
+            { text: 'Continue with Google' },
+            { text: 'Continue with Microsoft' },
+            { text: 'Continue with Apple' },
+            { text: 'Continue with phone' }
           ].map((provider, index) => (
             <button
               key={index}
@@ -257,50 +293,46 @@ const EezLegalApp = () => {
                 padding: '0.75rem',
                 border: '1px solid #d1d5db',
                 borderRadius: '0.375rem',
-                background: 'white',
+                background: '#ffffff',
                 color: '#374151',
                 cursor: 'pointer',
                 marginBottom: '0.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
                 fontSize: '0.875rem',
-                transition: 'all 0.2s',
                 fontFamily: 'inherit'
               }}
-              onMouseOver={(e) => e.target.style.background = '#f9fafb'}
-              onMouseOut={(e) => e.target.style.background = 'white'}
             >
-              <span style={{ marginRight: '0.5rem' }}>{provider.icon}</span>
               {provider.text}
             </button>
           ))}
         </div>
 
         {/* OR Divider */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }}></div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: '1.5rem'
+        }}>
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }}></div>
           <span style={{ padding: '0 1rem', color: '#6b7280', fontSize: '0.875rem' }}>OR</span>
-          <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }}></div>
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }}></div>
         </div>
 
         {/* Email Input */}
-        <div style={{ marginBottom: '1rem' }}>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              border: '2px solid #3b82f6',
-              borderRadius: '0.375rem',
-              fontSize: '0.875rem',
-              outline: 'none',
-              fontFamily: 'inherit',
-              boxSizing: 'border-box'
-            }}
-          />
-        </div>
+        <input
+          type="email"
+          placeholder="Email address"
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            border: '2px solid #3b82f6',
+            borderRadius: '0.375rem',
+            fontSize: '0.875rem',
+            outline: 'none',
+            marginBottom: '1rem',
+            fontFamily: 'inherit',
+            boxSizing: 'border-box'
+          }}
+        />
 
         {/* Continue Button */}
         <button
@@ -308,230 +340,344 @@ const EezLegalApp = () => {
           style={{
             width: '100%',
             padding: '0.75rem',
-            background: '#000',
-            color: 'white',
+            backgroundColor: '#000000',
+            color: '#ffffff',
             border: 'none',
             borderRadius: '0.375rem',
             cursor: 'pointer',
             fontSize: '0.875rem',
             fontWeight: '500',
-            marginBottom: '1rem',
             fontFamily: 'inherit'
           }}
         >
           Continue
         </button>
-
-        {/* Footer */}
-        <div style={{ textAlign: 'center' }}>
-          <button 
-            onClick={() => navigateTo('home')}
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              color: '#3b82f6', 
-              cursor: 'pointer', 
-              fontSize: '0.875rem',
-              fontFamily: 'inherit'
-            }}
-          >
-            ← Back to Home
-          </button>
-          <p style={{ 
-            color: '#6b7280', 
-            fontSize: '0.75rem', 
-            marginTop: '1rem',
-            margin: '1rem 0 0 0'
-          }}>
-            Learn more about EezLegal AI Legal Assistant
-          </p>
-        </div>
       </div>
     </div>
   );
 
-  // Dashboard Component - Full Chat Interface
-  const Dashboard = () => {
-    const [messages, setMessages] = useState([
-      { id: 1, text: "Hello! I'm your AI legal assistant. How can I help you today?", sender: 'ai', timestamp: new Date() }
-    ]);
-    const [inputMessage, setInputMessage] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
-    const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-
-    const sendMessage = () => {
-      if (!inputMessage.trim()) return;
-
-      const newMessage = {
-        id: messages.length + 1,
-        text: inputMessage,
-        sender: 'user',
-        timestamp: new Date()
-      };
-
-      setMessages([...messages, newMessage]);
-      setInputMessage('');
-      setIsTyping(true);
-
-      // Simulate AI response
-      setTimeout(() => {
-        const aiResponse = {
-          id: messages.length + 2,
-          text: "I understand your question. Based on the legal context you've provided, here are some key considerations...",
-          sender: 'ai',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, aiResponse]);
-        setIsTyping(false);
-      }, 2000);
-    };
-
-    return (
-      <div style={{ 
-        height: '100vh', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        background: '#f8fafc',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+  // Dashboard Component - ChatGPT Style
+  const Dashboard = () => (
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#ffffff',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      display: 'flex'
+    }}>
+      {/* Sidebar */}
+      <div style={{
+        width: sidebarCollapsed ? '60px' : '260px',
+        backgroundColor: '#f8f9fa',
+        borderRight: '1px solid #e5e7eb',
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'width 0.2s ease'
       }}>
-        {/* Header */}
-        <header style={{ 
-          background: 'white', 
-          padding: '1rem 2rem', 
+        {/* Sidebar Header */}
+        <div style={{
+          padding: '1rem',
           borderBottom: '1px solid #e5e7eb',
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
-          flexWrap: 'wrap'
+          justifyContent: sidebarCollapsed ? 'center' : 'space-between'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            {isMobile && (
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.25rem',
-                  cursor: 'pointer',
-                  marginRight: '1rem'
-                }}
-              >
-                ☰
-              </button>
-            )}
-            <h1 style={{ 
-              fontSize: isMobile ? '1.25rem' : '1.5rem', 
-              fontWeight: 'bold', 
-              color: '#1f2937', 
-              marginRight: '2rem',
-              margin: '0 2rem 0 0'
+          {!sidebarCollapsed && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '1.125rem',
+              fontWeight: '600'
             }}>
+              <Shield size={20} />
               Eezlegal
-            </h1>
-            {!isMobile && (
-              <span style={{ color: '#6b7280' }}>AI Legal Assistant</span>
-            )}
-          </div>
+            </div>
+          )}
           <button
-            onClick={handleLogout}
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             style={{
-              background: '#ef4444',
-              color: 'white',
+              background: 'transparent',
               border: 'none',
-              padding: '0.5rem 1rem',
+              cursor: 'pointer',
+              padding: '0.25rem'
+            }}
+          >
+            <Menu size={20} />
+          </button>
+        </div>
+
+        {/* New Chat Button */}
+        <div style={{ padding: '1rem' }}>
+          <button
+            onClick={() => {
+              setMessages([]);
+              setActiveChat(null);
+            }}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              backgroundColor: '#ffffff',
+              border: '1px solid #d1d5db',
               borderRadius: '0.375rem',
               cursor: 'pointer',
               fontSize: '0.875rem',
-              fontFamily: 'inherit'
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+              gap: '0.5rem'
             }}
           >
-            Logout
+            <span style={{ fontSize: '1.25rem' }}>+</span>
+            {!sidebarCollapsed && 'New Chat'}
           </button>
-        </header>
+        </div>
 
-        {/* Main Content */}
-        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-          {/* Sidebar */}
-          {(sidebarOpen || !isMobile) && (
-            <div style={{ 
-              width: isMobile ? '250px' : '300px', 
-              background: 'white', 
-              borderRight: '1px solid #e5e7eb', 
-              padding: '1rem',
-              position: isMobile ? 'absolute' : 'relative',
-              height: isMobile ? '100%' : 'auto',
-              zIndex: isMobile ? 1000 : 'auto',
-              boxShadow: isMobile ? '2px 0 10px rgba(0,0,0,0.1)' : 'none'
+        {/* Search */}
+        {!sidebarCollapsed && (
+          <div style={{ padding: '0 1rem 1rem' }}>
+            <input
+              type="text"
+              placeholder="Search chats"
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '0.375rem',
+                fontSize: '0.875rem',
+                outline: 'none',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+        )}
+
+        {/* Recent Chats */}
+        {!sidebarCollapsed && (
+          <div style={{ flex: 1, padding: '0 1rem' }}>
+            <h3 style={{
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              color: '#6b7280',
+              marginBottom: '0.5rem'
             }}>
-              <h3 style={{ 
-                fontSize: '1rem', 
-                fontWeight: '600', 
-                marginBottom: '1rem', 
-                color: '#374151',
-                margin: '0 0 1rem 0'
-              }}>
-                Quick Actions
-              </h3>
-              
-              <button style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.375rem',
-                cursor: 'pointer',
-                marginBottom: '0.5rem',
-                fontSize: '0.875rem',
-                fontFamily: 'inherit'
-              }}>
-                📄 Upload Document
+              Recent Chats
+            </h3>
+            {chatHistory.map((chat, index) => (
+              <button
+                key={index}
+                onClick={() => setActiveChat(chat)}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  backgroundColor: activeChat === chat ? '#e5e7eb' : 'transparent',
+                  border: 'none',
+                  borderRadius: '0.375rem',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  textAlign: 'left',
+                  marginBottom: '0.25rem',
+                  color: '#374151'
+                }}
+              >
+                {chat}
               </button>
-              
-              <button style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: '#10b981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.375rem',
-                cursor: 'pointer',
-                marginBottom: '0.5rem',
-                fontSize: '0.875rem',
-                fontFamily: 'inherit'
-              }}>
-                💬 New Chat
-              </button>
+            ))}
+          </div>
+        )}
 
-              <div style={{ marginTop: '2rem' }}>
-                <h4 style={{ 
-                  fontSize: '0.875rem', 
-                  fontWeight: '600', 
-                  marginBottom: '0.5rem', 
-                  color: '#6b7280',
-                  margin: '0 0 0.5rem 0'
-                }}>
-                  Recent Chats
-                </h4>
-                <div style={{ color: '#9ca3af', fontSize: '0.75rem' }}>No recent chats</div>
-              </div>
+        {/* User Menu */}
+        <div style={{
+          padding: '1rem',
+          borderTop: '1px solid #e5e7eb',
+          position: 'relative'
+        }}>
+          {!sidebarCollapsed && (
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                backgroundColor: 'transparent',
+                border: 'none',
+                borderRadius: '0.375rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <User size={16} />
+              User6
+            </button>
+          )}
+          
+          {showUserMenu && (
+            <div style={{
+              position: 'absolute',
+              bottom: '100%',
+              left: '1rem',
+              right: '1rem',
+              backgroundColor: '#ffffff',
+              border: '1px solid #d1d5db',
+              borderRadius: '0.375rem',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              zIndex: 100
+            }}>
+              <button
+                onClick={() => {
+                  setShowSettings(true);
+                  setShowUserMenu(false);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  textAlign: 'left'
+                }}
+              >
+                <Settings size={16} />
+                Settings
+              </button>
+              <button
+                onClick={() => {
+                  setShowLogoutModal(true);
+                  setShowUserMenu(false);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  textAlign: 'left'
+                }}
+              >
+                <LogOut size={16} />
+                Log out
+              </button>
             </div>
           )}
+        </div>
+      </div>
 
-          {/* Chat Area */}
-          <div style={{ 
-            flex: 1, 
-            display: 'flex', 
+      {/* Main Content */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {messages.length === 0 ? (
+          // Empty State
+          <div style={{
+            flex: 1,
+            display: 'flex',
             flexDirection: 'column',
-            marginLeft: (isMobile && sidebarOpen) ? '250px' : '0'
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem'
           }}>
-            {/* Messages */}
-            <div style={{ flex: 1, padding: '1rem', overflowY: 'auto' }}>
+            <h1 style={{
+              fontSize: '2rem',
+              fontWeight: '600',
+              color: '#000000',
+              marginBottom: '3rem',
+              textAlign: 'center'
+            }}>
+              How can we help?
+            </h1>
+
+            <div style={{
+              width: '100%',
+              maxWidth: '600px',
+              marginBottom: '1rem'
+            }}>
+              <div style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <input
+                  type="text"
+                  placeholder="Tell us your legal problem..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  style={{
+                    width: '100%',
+                    padding: '1rem 3rem 1rem 1rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '1.5rem',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  onClick={sendMessage}
+                  style={{
+                    position: 'absolute',
+                    right: '0.5rem',
+                    background: '#000000',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '2rem',
+                    height: '2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Send size={16} />
+                </button>
+              </div>
+            </div>
+
+            <button
+              style={{
+                background: 'transparent',
+                color: '#6b7280',
+                border: '1px solid #d1d5db',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.375rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <Paperclip size={16} />
+              Attach
+            </button>
+          </div>
+        ) : (
+          // Chat Messages
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '2rem'
+            }}>
               {messages.map((message) => (
                 <div
                   key={message.id}
                   style={{
-                    marginBottom: '1rem',
+                    marginBottom: '1.5rem',
                     display: 'flex',
                     justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start'
                   }}
@@ -539,90 +685,92 @@ const EezLegalApp = () => {
                   <div
                     style={{
                       maxWidth: '70%',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '1rem',
-                      background: message.sender === 'user' ? '#3b82f6' : 'white',
-                      color: message.sender === 'user' ? 'white' : '#374151',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                      padding: '1rem',
+                      borderRadius: '0.75rem',
+                      backgroundColor: message.sender === 'user' ? '#e5e7eb' : '#ffffff',
+                      border: message.sender === 'ai' ? '1px solid #e5e7eb' : 'none',
+                      whiteSpace: 'pre-wrap',
+                      lineHeight: '1.5'
                     }}
                   >
-                    <p style={{ margin: 0, fontSize: '0.875rem', lineHeight: '1.4' }}>
-                      {message.text}
-                    </p>
-                    <div style={{ 
-                      fontSize: '0.75rem', 
-                      opacity: 0.7, 
-                      marginTop: '0.25rem',
-                      textAlign: message.sender === 'user' ? 'right' : 'left'
-                    }}>
-                      {message.timestamp.toLocaleTimeString()}
-                    </div>
+                    {message.text}
                   </div>
                 </div>
               ))}
-              
-              {isTyping && (
-                <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '1rem' }}>
-                  <div style={{
-                    padding: '0.75rem 1rem',
-                    borderRadius: '1rem',
-                    background: 'white',
-                    color: '#6b7280',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                    fontSize: '0.875rem'
-                  }}>
-                    AI is typing...
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Input Area */}
-            <div style={{ 
-              padding: '1rem', 
-              background: 'white', 
-              borderTop: '1px solid #e5e7eb' 
+            {/* Chat Input */}
+            <div style={{
+              padding: '1rem 2rem',
+              borderTop: '1px solid #e5e7eb'
             }}>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '0.5rem'
+              }}>
                 <input
                   type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
+                  placeholder="Type your message..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                  placeholder="Ask a legal question..."
                   style={{
-                    flex: 1,
-                    padding: '0.75rem',
+                    width: '100%',
+                    padding: '1rem 3rem 1rem 1rem',
                     border: '1px solid #d1d5db',
-                    borderRadius: '0.5rem',
-                    fontSize: '0.875rem',
+                    borderRadius: '1.5rem',
+                    fontSize: '1rem',
                     outline: 'none',
-                    fontFamily: 'inherit'
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box'
                   }}
                 />
                 <button
                   onClick={sendMessage}
                   style={{
-                    padding: '0.75rem 1.5rem',
-                    background: '#3b82f6',
-                    color: 'white',
+                    position: 'absolute',
+                    right: '0.5rem',
+                    background: '#000000',
+                    color: '#ffffff',
                     border: 'none',
-                    borderRadius: '0.5rem',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    fontFamily: 'inherit'
+                    borderRadius: '50%',
+                    width: '2rem',
+                    height: '2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
                   }}
                 >
-                  Send
+                  <Send size={16} />
                 </button>
               </div>
+              
+              <button
+                style={{
+                  background: 'transparent',
+                  color: '#6b7280',
+                  border: '1px solid #d1d5db',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.375rem',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                <Paperclip size={16} />
+                Attach
+              </button>
             </div>
           </div>
-        </div>
+        )}
       </div>
-    );
-  };
+    </div>
+  );
 
   // Welcome Back Modal
   const WelcomeModal = () => (
@@ -632,7 +780,7 @@ const EezLegalApp = () => {
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(0,0,0,0.5)',
+      backgroundColor: 'rgba(0,0,0,0.5)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -640,109 +788,406 @@ const EezLegalApp = () => {
       padding: '1rem'
     }}>
       <div style={{
-        background: 'white',
-        padding: '2rem',
+        backgroundColor: '#ffffff',
         borderRadius: '0.5rem',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+        padding: '2rem',
         maxWidth: '400px',
         width: '100%',
-        textAlign: 'center',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        textAlign: 'center'
       }}>
-        <h2 style={{ 
-          fontSize: '1.5rem', 
-          fontWeight: 'bold', 
-          marginBottom: '1rem', 
-          color: '#1f2937',
-          margin: '0 0 1rem 0'
+        <h2 style={{
+          fontSize: '1.5rem',
+          fontWeight: '600',
+          marginBottom: '1rem'
         }}>
-          Welcome Back!
+          Welcome Back
         </h2>
-        <p style={{ 
-          color: '#6b7280', 
+        <p style={{
+          color: '#6b7280',
           marginBottom: '2rem',
-          margin: '0 0 2rem 0',
-          lineHeight: '1.5'
+          fontSize: '0.875rem'
         }}>
-          Continue where you left off with your AI legal assistant.
+          Log in or sign up to get smarter responses, upload files and images, and more.
         </p>
-        <div style={{ 
-          display: 'flex', 
-          gap: '1rem', 
-          justifyContent: 'center',
-          flexDirection: isMobile ? 'column' : 'row'
-        }}>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <button
             onClick={handleLogin}
             style={{
-              padding: '0.75rem 1.5rem',
-              background: '#3b82f6',
-              color: 'white',
+              width: '100%',
+              padding: '0.75rem',
+              backgroundColor: '#000000',
+              color: '#ffffff',
               border: 'none',
               borderRadius: '0.375rem',
               cursor: 'pointer',
               fontSize: '0.875rem',
-              fontWeight: '500',
-              fontFamily: 'inherit'
+              fontWeight: '500'
             }}
           >
             Log In
           </button>
           <button
-            onClick={() => navigateTo('login')}
+            onClick={() => setShowAuthModal(true)}
             style={{
-              padding: '0.75rem 1.5rem',
-              background: 'transparent',
-              color: '#3b82f6',
-              border: '2px solid #3b82f6',
+              width: '100%',
+              padding: '0.75rem',
+              backgroundColor: '#ffffff',
+              color: '#000000',
+              border: '1px solid #d1d5db',
               borderRadius: '0.375rem',
               cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              fontFamily: 'inherit'
+              fontSize: '0.875rem'
             }}
           >
             Sign up for free
           </button>
+          <button
+            onClick={() => setShowWelcomeModal(false)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#6b7280',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              padding: '0.5rem'
+            }}
+          >
+            Stay logged out
+          </button>
         </div>
-        <button
-          onClick={() => setShowWelcomeModal(false)}
-          style={{
-            marginTop: '1rem',
-            background: 'none',
-            border: 'none',
-            color: '#6b7280',
-            cursor: 'pointer',
-            fontSize: '0.875rem',
-            fontFamily: 'inherit'
-          }}
-        >
-          Cancel
-        </button>
       </div>
     </div>
   );
 
-  // Render current page
-  const renderCurrentPage = () => {
-    if (isLoggedIn && currentPage === 'dashboard') {
-      return <Dashboard />;
-    }
-    
-    switch (currentPage) {
-      case 'login':
-        return <LoginPage />;
-      case 'dashboard':
-        return isLoggedIn ? <Dashboard /> : <LoginPage />;
-      default:
-        return <HomePage />;
-    }
-  };
+  // Logout Confirmation Modal
+  const LogoutModal = () => (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: '1rem'
+    }}>
+      <div style={{
+        backgroundColor: '#ffffff',
+        borderRadius: '0.5rem',
+        padding: '2rem',
+        maxWidth: '400px',
+        width: '100%',
+        textAlign: 'center'
+      }}>
+        <h2 style={{
+          fontSize: '1.25rem',
+          fontWeight: '600',
+          marginBottom: '1rem'
+        }}>
+          Are you sure you want to log out
+        </h2>
+        <p style={{
+          color: '#6b7280',
+          marginBottom: '2rem',
+          fontSize: '0.875rem'
+        }}>
+          Log out of Eezlegal as User6?
+        </p>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <button
+            onClick={handleLogout}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              backgroundColor: '#000000',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '0.375rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: '500'
+            }}
+          >
+            Log out
+          </button>
+          <button
+            onClick={() => setShowLogoutModal(false)}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              backgroundColor: '#ffffff',
+              color: '#000000',
+              border: '1px solid #d1d5db',
+              borderRadius: '0.375rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem'
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Settings Modal
+  const SettingsModal = () => (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: '1rem'
+    }}>
+      <div style={{
+        backgroundColor: '#ffffff',
+        borderRadius: '0.5rem',
+        width: '100%',
+        maxWidth: '600px',
+        height: '400px',
+        display: 'flex',
+        overflow: 'hidden'
+      }}>
+        {/* Settings Sidebar */}
+        <div style={{
+          width: '200px',
+          backgroundColor: '#f8f9fa',
+          borderRight: '1px solid #e5e7eb',
+          padding: '1rem'
+        }}>
+          <button
+            onClick={() => setShowSettings(false)}
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              left: '1rem',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <X size={20} />
+          </button>
+          
+          <div style={{ marginTop: '2rem' }}>
+            <div style={{
+              padding: '0.75rem',
+              backgroundColor: '#e5e7eb',
+              borderRadius: '0.375rem',
+              marginBottom: '0.5rem',
+              fontSize: '0.875rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <Settings size={16} />
+              General
+            </div>
+            <div style={{
+              padding: '0.75rem',
+              fontSize: '0.875rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              color: '#6b7280'
+            }}>
+              <User size={16} />
+              Account
+            </div>
+            <div style={{
+              padding: '0.75rem',
+              fontSize: '0.875rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              color: '#6b7280'
+            }}>
+              <Shield size={16} />
+              Data Controls
+            </div>
+          </div>
+        </div>
+
+        {/* Settings Content */}
+        <div style={{
+          flex: 1,
+          padding: '2rem'
+        }}>
+          <h2 style={{
+            fontSize: '1.25rem',
+            fontWeight: '600',
+            marginBottom: '2rem'
+          }}>
+            General
+          </h2>
+
+          {/* Theme Setting */}
+          <div style={{ marginBottom: '2rem' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              marginBottom: '0.5rem'
+            }}>
+              Theme
+            </label>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowThemeDropdown(!showThemeDropdown)}
+                style={{
+                  width: '200px',
+                  padding: '0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.375rem',
+                  backgroundColor: '#ffffff',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  textAlign: 'left',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                {currentTheme}
+                <span>▼</span>
+              </button>
+              
+              {showThemeDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.375rem',
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                  zIndex: 100
+                }}>
+                  {['System', 'Dark', 'Light'].map((theme) => (
+                    <button
+                      key={theme}
+                      onClick={() => {
+                        setCurrentTheme(theme);
+                        setShowThemeDropdown(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem',
+                        textAlign: 'left',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      {theme}
+                      {currentTheme === theme && <span>✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Language Setting */}
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              marginBottom: '0.5rem'
+            }}>
+              Language
+            </label>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+                style={{
+                  width: '200px',
+                  padding: '0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.375rem',
+                  backgroundColor: '#ffffff',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  textAlign: 'left',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                {currentLanguage}
+                <span>▼</span>
+              </button>
+              
+              {showLanguageDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.375rem',
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                  zIndex: 100
+                }}>
+                  {['Auto-detect', 'English (US)', 'Dutch', 'Espanola', 'French'].map((language) => (
+                    <button
+                      key={language}
+                      onClick={() => {
+                        setCurrentLanguage(language);
+                        setShowLanguageDropdown(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem',
+                        textAlign: 'left',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      {language}
+                      {currentLanguage === language && <span>✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div>
-      {renderCurrentPage()}
+      {isLoggedIn ? <Dashboard /> : <Homepage />}
+      
+      {showAuthModal && <AuthModal />}
       {showWelcomeModal && <WelcomeModal />}
+      {showLogoutModal && <LogoutModal />}
+      {showSettings && <SettingsModal />}
     </div>
   );
 };
