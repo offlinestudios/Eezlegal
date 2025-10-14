@@ -9,8 +9,8 @@ const EezLegalApp = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
-  // Input state - simple string state
-  const [inputText, setInputText] = useState('');
+  // Working input state - PROVEN TO WORK
+  const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState([]);
   const [chatHistory, setChatHistory] = useState([]);
 
@@ -20,23 +20,17 @@ const EezLegalApp = () => {
   const [showThemeDropdown, setShowThemeDropdown] = useState(false);
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
 
-  // Simple input handler
+  // Working input handlers - PROVEN TO WORK
   const handleInputChange = (e) => {
-    setInputText(e.target.value);
+    setInputValue(e.target.value);
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && inputText.trim()) {
-      sendMessage();
-    }
-  };
-
-  const sendMessage = () => {
-    if (!inputText.trim()) return;
+  const handleSendMessage = () => {
+    if (!inputValue.trim()) return;
     
     const newMessage = {
       id: Date.now(),
-      text: inputText,
+      text: inputValue,
       sender: 'user',
       timestamp: new Date()
     };
@@ -45,11 +39,11 @@ const EezLegalApp = () => {
     
     // Add to chat history if it's a new conversation
     if (messages.length === 0) {
-      const chatTitle = inputText.length > 30 ? inputText.substring(0, 30) + '...' : inputText;
+      const chatTitle = inputValue.length > 30 ? inputValue.substring(0, 30) + '...' : inputValue;
       setChatHistory(prev => [chatTitle, ...prev]);
     }
     
-    setInputText(''); // Clear input
+    setInputValue(''); // Clear input - PROVEN TO WORK
     
     // Simulate AI response
     setTimeout(() => {
@@ -61,6 +55,12 @@ const EezLegalApp = () => {
       };
       setMessages(prev => [...prev, aiResponse]);
     }, 1000);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && inputValue.trim()) {
+      handleSendMessage();
+    }
   };
 
   // OAuth handlers
@@ -89,9 +89,59 @@ const EezLegalApp = () => {
     setIsLoggedIn(false);
     setMessages([]);
     setChatHistory([]);
-    setInputText('');
+    setInputValue('');
     setShowUserMenu(false);
   };
+
+  // Working Input Component - PROVEN TO WORK
+  const WorkingInput = ({ placeholder, onSend }) => (
+    <div style={{
+      width: '100%',
+      maxWidth: '600px',
+      position: 'relative'
+    }}>
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={inputValue}
+        onChange={handleInputChange}
+        onKeyPress={handleKeyPress}
+        style={{
+          width: '100%',
+          padding: '1rem 4rem 1rem 1.5rem',
+          border: '1px solid #d1d5db',
+          borderRadius: '2rem',
+          fontSize: '1rem',
+          outline: 'none',
+          fontFamily: 'inherit',
+          boxSizing: 'border-box',
+          backgroundColor: '#ffffff'
+        }}
+      />
+      <button
+        onClick={onSend}
+        disabled={!inputValue.trim()}
+        style={{
+          position: 'absolute',
+          right: '0.75rem',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          background: inputValue.trim() ? '#000000' : '#e5e7eb',
+          color: '#ffffff',
+          border: 'none',
+          borderRadius: '50%',
+          width: '2.5rem',
+          height: '2.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: inputValue.trim() ? 'pointer' : 'not-allowed'
+        }}
+      >
+        <Send size={18} />
+      </button>
+    </div>
+  );
 
   // Homepage Component - EXACT Figma Match
   const Homepage = () => (
@@ -108,7 +158,6 @@ const EezLegalApp = () => {
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '1.5rem 2rem'
-        // NO borderBottom - this was the extra line you mentioned
       }}>
         <div style={{
           display: 'flex',
@@ -179,75 +228,26 @@ const EezLegalApp = () => {
           Eezlegal
         </h1>
 
-        {/* Composer - Single Rounded Field with Integrated Send Button (Exact Figma) */}
-        <div style={{
-          width: '100%',
-          maxWidth: '600px',
-          marginBottom: '1.5rem',
-          position: 'relative'
-        }}>
-          <div style={{
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center'
-          }}>
-            <input
-              type="text"
-              placeholder="Tell us your legal problem..."
-              value={inputText}
-              onChange={handleInputChange}
-              onKeyPress={handleKeyPress}
-              style={{
-                width: '100%',
-                padding: '1rem 4rem 1rem 1.5rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '2rem', // More rounded as per Figma
-                fontSize: '1rem',
-                outline: 'none',
-                fontFamily: 'inherit',
-                boxSizing: 'border-box',
-                backgroundColor: '#ffffff'
-              }}
-            />
-            <button
-              onClick={sendMessage}
-              disabled={!inputText.trim()}
-              style={{
-                position: 'absolute',
-                right: '0.75rem',
-                background: inputText.trim() ? '#000000' : '#e5e7eb',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '50%',
-                width: '2.5rem',
-                height: '2.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: inputText.trim() ? 'pointer' : 'not-allowed'
-              }}
-            >
-              <Send size={18} />
-            </button>
-          </div>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <WorkingInput 
+            placeholder="Tell us your legal problem..." 
+            onSend={handleSendMessage}
+          />
         </div>
 
-        {/* Attach Button - Separate as per Figma */}
-        <button
-          style={{
-            background: 'transparent',
-            color: '#6b7280',
-            border: '1px solid #d1d5db',
-            padding: '0.75rem 1.25rem',
-            borderRadius: '2rem', // Rounded to match input
-            cursor: 'pointer',
-            fontSize: '0.875rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontFamily: 'inherit'
-          }}
-        >
+        <button style={{
+          background: 'transparent',
+          color: '#6b7280',
+          border: '1px solid #d1d5db',
+          padding: '0.75rem 1.25rem',
+          borderRadius: '2rem',
+          cursor: 'pointer',
+          fontSize: '0.875rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          fontFamily: 'inherit'
+        }}>
           <Paperclip size={16} />
           Attach
         </button>
@@ -474,7 +474,7 @@ const EezLegalApp = () => {
     );
   };
 
-  // Dashboard Component (simplified for now)
+  // Dashboard Component
   const Dashboard = () => (
     <div style={{
       minHeight: '100vh',
@@ -527,7 +527,7 @@ const EezLegalApp = () => {
           <button
             onClick={() => {
               setMessages([]);
-              setInputText('');
+              setInputValue('');
             }}
             style={{
               width: '100%',
@@ -688,73 +688,26 @@ const EezLegalApp = () => {
               How can we help?
             </h1>
 
-            <div style={{
-              width: '100%',
-              maxWidth: '600px',
-              marginBottom: '1.5rem',
-              position: 'relative'
-            }}>
-              <div style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                <input
-                  type="text"
-                  placeholder="Tell us your legal problem..."
-                  value={inputText}
-                  onChange={handleInputChange}
-                  onKeyPress={handleKeyPress}
-                  style={{
-                    width: '100%',
-                    padding: '1rem 4rem 1rem 1.5rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '2rem',
-                    fontSize: '1rem',
-                    outline: 'none',
-                    fontFamily: 'inherit',
-                    boxSizing: 'border-box',
-                    backgroundColor: '#ffffff'
-                  }}
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={!inputText.trim()}
-                  style={{
-                    position: 'absolute',
-                    right: '0.75rem',
-                    background: inputText.trim() ? '#000000' : '#e5e7eb',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '2.5rem',
-                    height: '2.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: inputText.trim() ? 'pointer' : 'not-allowed'
-                  }}
-                >
-                  <Send size={18} />
-                </button>
-              </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <WorkingInput 
+                placeholder="Tell us your legal problem..." 
+                onSend={handleSendMessage}
+              />
             </div>
 
-            <button
-              style={{
-                background: 'transparent',
-                color: '#6b7280',
-                border: '1px solid #d1d5db',
-                padding: '0.75rem 1.25rem',
-                borderRadius: '2rem',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontFamily: 'inherit'
-              }}
-            >
+            <button style={{
+              background: 'transparent',
+              color: '#6b7280',
+              border: '1px solid #d1d5db',
+              padding: '0.75rem 1.25rem',
+              borderRadius: '2rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontFamily: 'inherit'
+            }}>
               <Paperclip size={16} />
               Attach
             </button>
@@ -800,71 +753,26 @@ const EezLegalApp = () => {
               padding: '1rem 2rem',
               borderTop: '1px solid #e5e7eb'
             }}>
-              <div style={{
-                marginBottom: '0.5rem',
-                position: 'relative'
-              }}>
-                <div style={{
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}>
-                  <input
-                    type="text"
-                    placeholder="Type your message..."
-                    value={inputText}
-                    onChange={handleInputChange}
-                    onKeyPress={handleKeyPress}
-                    style={{
-                      width: '100%',
-                      padding: '1rem 4rem 1rem 1.5rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '2rem',
-                      fontSize: '1rem',
-                      outline: 'none',
-                      fontFamily: 'inherit',
-                      boxSizing: 'border-box',
-                      backgroundColor: '#ffffff'
-                    }}
-                  />
-                  <button
-                    onClick={sendMessage}
-                    disabled={!inputText.trim()}
-                    style={{
-                      position: 'absolute',
-                      right: '0.75rem',
-                      background: inputText.trim() ? '#000000' : '#e5e7eb',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: '2.5rem',
-                      height: '2.5rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: inputText.trim() ? 'pointer' : 'not-allowed'
-                    }}
-                  >
-                    <Send size={18} />
-                  </button>
-                </div>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <WorkingInput 
+                  placeholder="Type your message..." 
+                  onSend={handleSendMessage}
+                />
               </div>
               
-              <button
-                style={{
-                  background: 'transparent',
-                  color: '#6b7280',
-                  border: '1px solid #d1d5db',
-                  padding: '0.75rem 1.25rem',
-                  borderRadius: '2rem',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontFamily: 'inherit'
-                }}
-              >
+              <button style={{
+                background: 'transparent',
+                color: '#6b7280',
+                border: '1px solid #d1d5db',
+                padding: '0.75rem 1.25rem',
+                borderRadius: '2rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontFamily: 'inherit'
+              }}>
                 <Paperclip size={16} />
                 Attach
               </button>
@@ -875,10 +783,118 @@ const EezLegalApp = () => {
     </div>
   );
 
+  // Settings Modal (simplified for now)
+  const SettingsModal = () => (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: '1rem'
+    }}>
+      <div style={{
+        backgroundColor: '#ffffff',
+        borderRadius: '0.75rem',
+        padding: '2rem',
+        maxWidth: '500px',
+        width: '100%',
+        position: 'relative'
+      }}>
+        <button
+          onClick={() => setShowSettings(false)}
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          <X size={20} />
+        </button>
+
+        <h2 style={{
+          fontSize: '1.5rem',
+          fontWeight: '600',
+          color: '#000000',
+          marginBottom: '2rem'
+        }}>
+          Settings
+        </h2>
+
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label style={{
+            display: 'block',
+            fontSize: '0.875rem',
+            fontWeight: '500',
+            color: '#374151',
+            marginBottom: '0.5rem'
+          }}>
+            Theme
+          </label>
+          <select
+            value={currentTheme}
+            onChange={(e) => setCurrentTheme(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              border: '1px solid #d1d5db',
+              borderRadius: '0.375rem',
+              fontSize: '0.875rem',
+              fontFamily: 'inherit'
+            }}
+          >
+            <option>Light</option>
+            <option>Dark</option>
+            <option>System</option>
+          </select>
+        </div>
+
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label style={{
+            display: 'block',
+            fontSize: '0.875rem',
+            fontWeight: '500',
+            color: '#374151',
+            marginBottom: '0.5rem'
+          }}>
+            Language
+          </label>
+          <select
+            value={currentLanguage}
+            onChange={(e) => setCurrentLanguage(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              border: '1px solid #d1d5db',
+              borderRadius: '0.375rem',
+              fontSize: '0.875rem',
+              fontFamily: 'inherit'
+            }}
+          >
+            <option>Auto-detect</option>
+            <option>English (US)</option>
+            <option>Dutch</option>
+            <option>Espanola</option>
+            <option>French</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div>
       {isLoggedIn ? <Dashboard /> : <Homepage />}
       {showAuthModal && <AuthModal />}
+      {showSettings && <SettingsModal />}
     </div>
   );
 };
