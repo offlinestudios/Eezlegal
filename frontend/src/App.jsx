@@ -2,30 +2,30 @@ import React, { useState } from 'react';
 import { Shield, Send, Paperclip, Menu, X, Settings, User, LogOut } from 'lucide-react';
 
 const EezLegalApp = () => {
-  // Core state
+  // ISOLATED INPUT STATE - COMPLETELY SEPARATE FROM OTHER FEATURES
+  const [inputText, setInputText] = useState('');
+  
+  // Core application state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
-  // PROVEN WORKING INPUT STATE - DO NOT CHANGE
-  const [inputText, setInputText] = useState('');
+  // Chat state
   const [messages, setMessages] = useState([]);
   const [chatHistory, setChatHistory] = useState([]);
 
   // Settings state
   const [currentTheme, setCurrentTheme] = useState('Light');
   const [currentLanguage, setCurrentLanguage] = useState('Auto-detect');
-  const [showThemeDropdown, setShowThemeDropdown] = useState(false);
-  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
 
-  // PROVEN WORKING INPUT HANDLERS - DO NOT CHANGE
-  const updateInput = (event) => {
+  // ISOLATED INPUT HANDLERS - NO INTERFERENCE FROM OTHER FEATURES
+  const handleInputChange = (event) => {
     setInputText(event.target.value);
   };
 
-  const sendMessage = () => {
+  const handleSendMessage = () => {
     if (!inputText.trim()) return;
     
     const newMessage = {
@@ -43,7 +43,7 @@ const EezLegalApp = () => {
       setChatHistory(prev => [chatTitle, ...prev]);
     }
     
-    setInputText(''); // Clear input - PROVEN TO WORK
+    setInputText(''); // Clear input
     
     // Simulate AI response
     setTimeout(() => {
@@ -59,20 +59,22 @@ const EezLegalApp = () => {
 
   const handleKeyDown = (event) => {
     if (event.key === 'Enter' && inputText.trim()) {
-      sendMessage();
+      event.preventDefault();
+      handleSendMessage();
     }
   };
 
-  // OAuth handlers
+  // OAuth handlers - Updated to point to backend
   const handleOAuthLogin = (provider) => {
+    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const oauthUrls = {
-      google: 'https://accounts.google.com/oauth/authorize?client_id=your-client-id&redirect_uri=your-redirect&scope=openid%20email%20profile&response_type=code',
-      microsoft: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=your-client-id&response_type=code&redirect_uri=your-redirect&scope=openid%20email%20profile',
-      apple: 'https://appleid.apple.com/auth/authorize?client_id=your-client-id&redirect_uri=your-redirect&response_type=code&scope=name%20email'
+      google: `${backendUrl}/auth/google`,
+      microsoft: `${backendUrl}/auth/microsoft`,
+      apple: `${backendUrl}/auth/apple`
     };
     
     if (oauthUrls[provider]) {
-      window.open(oauthUrls[provider], '_blank');
+      window.location.href = oauthUrls[provider];
     }
   };
 
@@ -93,21 +95,25 @@ const EezLegalApp = () => {
     setShowUserMenu(false);
   };
 
-  // PROVEN WORKING INPUT COMPONENT - DO NOT CHANGE
-  const WorkingInput = ({ placeholder }) => (
+  // COMPLETELY ISOLATED INPUT COMPONENT - HIGH Z-INDEX, NO INTERFERENCE
+  const IsolatedInput = ({ placeholder }) => (
     <div style={{
       width: '100%',
       maxWidth: '700px',
-      position: 'relative'
+      position: 'relative',
+      zIndex: 50, // High z-index to prevent overlay interference
+      outline: '2px solid transparent' // Debug outline removed
     }}>
-      <input
-        type="text"
+      <textarea
         placeholder={placeholder}
         value={inputText}
-        onChange={updateInput}
+        onChange={handleInputChange}
         onKeyDown={handleKeyDown}
+        rows={1}
         style={{
           width: '100%',
+          minHeight: '3.5rem', // Proper minimum height
+          maxHeight: '8rem',
           padding: '1.25rem 4.5rem 1.25rem 1.75rem',
           border: '1px solid #d1d5db',
           borderRadius: '2rem',
@@ -115,11 +121,19 @@ const EezLegalApp = () => {
           outline: 'none',
           fontFamily: 'inherit',
           boxSizing: 'border-box',
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          resize: 'none',
+          overflow: 'hidden',
+          lineHeight: '1.5'
+        }}
+        onInput={(e) => {
+          // Auto-resize textarea
+          e.target.style.height = 'auto';
+          e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px';
         }}
       />
       <button
-        onClick={sendMessage}
+        onClick={handleSendMessage}
         disabled={!inputText.trim()}
         style={{
           position: 'absolute',
@@ -135,7 +149,8 @@ const EezLegalApp = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: inputText.trim() ? 'pointer' : 'not-allowed'
+          cursor: inputText.trim() ? 'pointer' : 'not-allowed',
+          zIndex: 51 // Higher than input
         }}
       >
         <Send size={20} />
@@ -143,7 +158,7 @@ const EezLegalApp = () => {
     </div>
   );
 
-  // Homepage Component - EXACT Figma Match
+  // Homepage Component
   const Homepage = () => (
     <div style={{
       minHeight: '100vh',
@@ -152,12 +167,13 @@ const EezLegalApp = () => {
       display: 'flex',
       flexDirection: 'column'
     }}>
-      {/* Header - NO BORDER as per Figma */}
+      {/* Header - Clean, no border */}
       <header style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '1.5rem 2rem'
+        padding: '1.5rem 2rem',
+        zIndex: 10
       }}>
         <div style={{
           display: 'flex',
@@ -206,7 +222,7 @@ const EezLegalApp = () => {
         </div>
       </header>
 
-      {/* Main Content - Exact Figma Layout */}
+      {/* Main Content */}
       <main style={{
         flex: 1,
         display: 'flex',
@@ -216,7 +232,8 @@ const EezLegalApp = () => {
         padding: '2rem',
         maxWidth: '900px',
         margin: '0 auto',
-        width: '100%'
+        width: '100%',
+        zIndex: 1
       }}>
         <h1 style={{
           fontSize: '3rem',
@@ -229,7 +246,7 @@ const EezLegalApp = () => {
         </h1>
 
         <div style={{ marginBottom: '1.5rem' }}>
-          <WorkingInput placeholder="Tell us your legal problem..." />
+          <IsolatedInput placeholder="Tell us your legal problem..." />
         </div>
 
         <button style={{
@@ -252,7 +269,7 @@ const EezLegalApp = () => {
     </div>
   );
 
-  // Authentication Modal with proper OAuth icons
+  // Authentication Modal - PROPER Z-INDEX MANAGEMENT
   const AuthModal = () => {
     const [email, setEmail] = useState('');
 
@@ -267,7 +284,7 @@ const EezLegalApp = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000,
+        zIndex: 1000, // High z-index for modal
         padding: '1rem'
       }}>
         <div style={{
@@ -276,7 +293,8 @@ const EezLegalApp = () => {
           padding: '2rem',
           maxWidth: '420px',
           width: '100%',
-          position: 'relative'
+          position: 'relative',
+          zIndex: 1001
         }}>
           <button
             onClick={() => setShowAuthModal(false)}
@@ -286,7 +304,8 @@ const EezLegalApp = () => {
               right: '1rem',
               background: 'transparent',
               border: 'none',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              zIndex: 1002
             }}
           >
             <X size={20} />
@@ -486,7 +505,8 @@ const EezLegalApp = () => {
         borderRight: '1px solid #e5e7eb',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'width 0.2s ease'
+        transition: 'width 0.2s ease',
+        zIndex: 10
       }}>
         <div style={{
           padding: '1rem',
@@ -686,7 +706,7 @@ const EezLegalApp = () => {
             </h1>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <WorkingInput placeholder="Tell us your legal problem..." />
+              <IsolatedInput placeholder="Tell us your legal problem..." />
             </div>
 
             <button style={{
@@ -748,7 +768,7 @@ const EezLegalApp = () => {
               borderTop: '1px solid #e5e7eb'
             }}>
               <div style={{ marginBottom: '0.5rem' }}>
-                <WorkingInput placeholder="Type your message..." />
+                <IsolatedInput placeholder="Type your message..." />
               </div>
               
               <button style={{
@@ -796,7 +816,8 @@ const EezLegalApp = () => {
         maxWidth: '600px',
         width: '100%',
         position: 'relative',
-        display: 'flex'
+        display: 'flex',
+        zIndex: 1001
       }}>
         <button
           onClick={() => setShowSettings(false)}
@@ -806,7 +827,8 @@ const EezLegalApp = () => {
             right: '1rem',
             background: 'transparent',
             border: 'none',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            zIndex: 1002
           }}
         >
           <X size={20} />
@@ -906,27 +928,24 @@ const EezLegalApp = () => {
             }}>
               Theme
             </label>
-            <div style={{ position: 'relative' }}>
-              <select
-                value={currentTheme}
-                onChange={(e) => setCurrentTheme(e.target.value)}
-                onClick={() => setShowThemeDropdown(!showThemeDropdown)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  fontFamily: 'inherit',
-                  backgroundColor: '#ffffff',
-                  cursor: 'pointer'
-                }}
-              >
-                <option>Light</option>
-                <option>Dark</option>
-                <option>System</option>
-              </select>
-            </div>
+            <select
+              value={currentTheme}
+              onChange={(e) => setCurrentTheme(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '0.375rem',
+                fontSize: '0.875rem',
+                fontFamily: 'inherit',
+                backgroundColor: '#ffffff',
+                cursor: 'pointer'
+              }}
+            >
+              <option>Light</option>
+              <option>Dark</option>
+              <option>System</option>
+            </select>
           </div>
 
           <div style={{ marginBottom: '2rem' }}>
@@ -939,29 +958,26 @@ const EezLegalApp = () => {
             }}>
               Language
             </label>
-            <div style={{ position: 'relative' }}>
-              <select
-                value={currentLanguage}
-                onChange={(e) => setCurrentLanguage(e.target.value)}
-                onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  fontFamily: 'inherit',
-                  backgroundColor: '#ffffff',
-                  cursor: 'pointer'
-                }}
-              >
-                <option>Auto-detect</option>
-                <option>English (US)</option>
-                <option>Dutch</option>
-                <option>Espanola</option>
-                <option>French</option>
-              </select>
-            </div>
+            <select
+              value={currentLanguage}
+              onChange={(e) => setCurrentLanguage(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '0.375rem',
+                fontSize: '0.875rem',
+                fontFamily: 'inherit',
+                backgroundColor: '#ffffff',
+                cursor: 'pointer'
+              }}
+            >
+              <option>Auto-detect</option>
+              <option>English (US)</option>
+              <option>Dutch</option>
+              <option>Espanola</option>
+              <option>French</option>
+            </select>
           </div>
         </div>
       </div>
