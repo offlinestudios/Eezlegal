@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Shield, Send, Paperclip, Menu, X, Settings, User, LogOut } from 'lucide-react';
 import { Textarea } from './components/ui/textarea';
+import ModalBase from './components/modals/ModalBase';
+import SafeChatScaffold from './layout/SafeChatScaffold';
 
 const EezLegalApp = () => {
   // ISOLATED INPUT STATE - COMPLETELY SEPARATE FROM OTHER FEATURES
@@ -97,12 +99,10 @@ const EezLegalApp = () => {
     setShowUserMenu(false);
   };
 
-  // FIXED COMPOSER COMPONENT - HIGH Z-INDEX AND PROPER LAYOUT
+  // FIXED COMPOSER COMPONENT - USING NEW TEXTAREA WITH GUARANTEED HEIGHT
   const ComposerInput = ({ placeholder }) => (
     <div style={{
       position: 'relative',
-      zIndex: 2001, // VERY HIGH Z-INDEX TO PREVENT OVERLAY BLOCKING
-      outline: '2px solid transparent', // Debug outline (can be removed)
       width: '100%',
       maxWidth: '700px'
     }}>
@@ -114,11 +114,9 @@ const EezLegalApp = () => {
         style={{
           paddingRight: '4rem', // Space for send button
           borderRadius: '2rem',
-          minHeight: '3.5rem',
-          maxHeight: '8rem',
           resize: 'none',
-          position: 'relative',
-          zIndex: 2002
+          border: '2px solid #e5e7eb',
+          backgroundColor: '#ffffff'
         }}
       />
       <button
@@ -138,8 +136,7 @@ const EezLegalApp = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: inputText.trim() ? 'pointer' : 'not-allowed',
-          zIndex: 2003 // Higher than textarea
+          cursor: inputText.trim() ? 'pointer' : 'not-allowed'
         }}
       >
         <Send size={20} />
@@ -211,7 +208,7 @@ const EezLegalApp = () => {
         </div>
       </header>
 
-      {/* Main Content - SAFE LAYOUT SCAFFOLD */}
+      {/* Main Content - USING SAFE LAYOUT SCAFFOLD PATTERN */}
       <main style={{
         flex: 1,
         display: 'flex',
@@ -221,9 +218,7 @@ const EezLegalApp = () => {
         padding: '2rem',
         maxWidth: '900px',
         margin: '0 auto',
-        width: '100%',
-        position: 'relative',
-        zIndex: 1
+        width: '100%'
       }}>
         <h1 style={{
           fontSize: '3rem',
@@ -244,9 +239,7 @@ const EezLegalApp = () => {
           alignItems: 'center',
           gap: '1.5rem',
           padding: '1rem',
-          backgroundColor: '#ffffff',
-          position: 'relative',
-          zIndex: 2000
+          backgroundColor: '#ffffff'
         }}>
           <ComposerInput placeholder="Tell us your legal problem..." />
           
@@ -271,277 +264,205 @@ const EezLegalApp = () => {
     </div>
   );
 
-  // Authentication Modal - PROPER UNMOUNTING AND POINTER EVENTS
+  // Authentication Modal - USING NEW MODAL BASE
   const AuthModal = () => {
     const [email, setEmail] = useState('');
 
-    // ONLY RENDER IF showAuthModal IS TRUE
-    if (!showAuthModal) return null;
-
     return (
-      <div 
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '1rem',
-          pointerEvents: 'auto' // Ensure modal can receive events
-        }}
-        onClick={(e) => {
-          // Close modal when clicking backdrop
-          if (e.target === e.currentTarget) {
-            setShowAuthModal(false);
-          }
-        }}
-      >
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '0.75rem',
-          padding: '2rem',
-          maxWidth: '420px',
-          width: '100%',
-          position: 'relative',
-          zIndex: 1001,
-          pointerEvents: 'auto'
-        }}>
+      <ModalBase open={showAuthModal} onClose={() => setShowAuthModal(false)}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: '600',
+            color: '#000000',
+            marginBottom: '0.5rem'
+          }}>
+            Login or sign up
+          </h2>
+          <p style={{
+            color: '#6b7280',
+            fontSize: '0.875rem'
+          }}>
+            You'll get smarter responses and can upload files, images, and more.
+          </p>
+        </div>
+
+        <div style={{ marginBottom: '1.5rem' }}>
+          {/* Google OAuth */}
           <button
-            onClick={() => setShowAuthModal(false)}
+            onClick={() => handleOAuthLogin('google')}
             style={{
-              position: 'absolute',
-              top: '1rem',
-              right: '1rem',
-              background: 'transparent',
-              border: 'none',
+              width: '100%',
+              padding: '0.875rem',
+              border: '1px solid #d1d5db',
+              borderRadius: '0.5rem',
+              background: '#ffffff',
+              color: '#374151',
               cursor: 'pointer',
-              zIndex: 1002
+              marginBottom: '0.75rem',
+              fontSize: '0.875rem',
+              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem'
             }}
           >
-            <X size={20} />
+            <svg width="20" height="20" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
           </button>
 
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <h2 style={{
-              fontSize: '1.5rem',
-              fontWeight: '600',
-              color: '#000000',
-              marginBottom: '0.5rem'
-            }}>
-              Login or sign up
-            </h2>
-            <p style={{
-              color: '#6b7280',
-              fontSize: '0.875rem'
-            }}>
-              You'll get smarter responses and can upload files, images, and more.
-            </p>
-          </div>
-
-          <div style={{ marginBottom: '1.5rem' }}>
-            {/* Google OAuth */}
-            <button
-              onClick={() => handleOAuthLogin('google')}
-              style={{
-                width: '100%',
-                padding: '0.875rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.5rem',
-                background: '#ffffff',
-                color: '#374151',
-                cursor: 'pointer',
-                marginBottom: '0.75rem',
-                fontSize: '0.875rem',
-                fontFamily: 'inherit',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.75rem'
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Continue with Google
-            </button>
-
-            {/* Microsoft OAuth */}
-            <button
-              onClick={() => handleOAuthLogin('microsoft')}
-              style={{
-                width: '100%',
-                padding: '0.875rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.5rem',
-                background: '#ffffff',
-                color: '#374151',
-                cursor: 'pointer',
-                marginBottom: '0.75rem',
-                fontSize: '0.875rem',
-                fontFamily: 'inherit',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.75rem'
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24">
-                <path fill="#F25022" d="M1 1h10v10H1z"/>
-                <path fill="#00A4EF" d="M13 1h10v10H13z"/>
-                <path fill="#7FBA00" d="M1 13h10v10H1z"/>
-                <path fill="#FFB900" d="M13 13h10v10H13z"/>
-              </svg>
-              Continue with Microsoft
-            </button>
-
-            {/* Apple OAuth */}
-            <button
-              onClick={() => handleOAuthLogin('apple')}
-              style={{
-                width: '100%',
-                padding: '0.875rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.5rem',
-                background: '#ffffff',
-                color: '#374151',
-                cursor: 'pointer',
-                marginBottom: '0.75rem',
-                fontSize: '0.875rem',
-                fontFamily: 'inherit',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.75rem'
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24">
-                <path fill="#000000" d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-              </svg>
-              Continue with Apple
-            </button>
-
-            {/* Phone OAuth */}
-            <button
-              onClick={() => alert('Phone authentication would be implemented here')}
-              style={{
-                width: '100%',
-                padding: '0.875rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.5rem',
-                background: '#ffffff',
-                color: '#374151',
-                cursor: 'pointer',
-                marginBottom: '0.75rem',
-                fontSize: '0.875rem',
-                fontFamily: 'inherit',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.75rem'
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>
-              Continue with phone
-            </button>
-          </div>
-
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: '1.5rem'
-          }}>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }}></div>
-            <span style={{ padding: '0 1rem', color: '#6b7280', fontSize: '0.875rem' }}>OR</span>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }}></div>
-          </div>
-
-          <input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.875rem',
-              border: '2px solid #3b82f6',
-              borderRadius: '0.5rem',
-              fontSize: '0.875rem',
-              outline: 'none',
-              marginBottom: '1rem',
-              fontFamily: 'inherit',
-              boxSizing: 'border-box'
-            }}
-          />
-
+          {/* Microsoft OAuth */}
           <button
-            onClick={() => handleEmailLogin(email)}
+            onClick={() => handleOAuthLogin('microsoft')}
             style={{
               width: '100%',
               padding: '0.875rem',
-              backgroundColor: '#000000',
-              color: '#ffffff',
-              border: 'none',
+              border: '1px solid #d1d5db',
               borderRadius: '0.5rem',
+              background: '#ffffff',
+              color: '#374151',
               cursor: 'pointer',
+              marginBottom: '0.75rem',
               fontSize: '0.875rem',
-              fontWeight: '500',
-              fontFamily: 'inherit'
+              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem'
             }}
           >
-            Continue
+            <svg width="20" height="20" viewBox="0 0 24 24">
+              <path fill="#F25022" d="M1 1h10v10H1z"/>
+              <path fill="#00A4EF" d="M13 1h10v10H13z"/>
+              <path fill="#7FBA00" d="M1 13h10v10H1z"/>
+              <path fill="#FFB900" d="M13 13h10v10H13z"/>
+            </svg>
+            Continue with Microsoft
+          </button>
+
+          {/* Apple OAuth */}
+          <button
+            onClick={() => handleOAuthLogin('apple')}
+            style={{
+              width: '100%',
+              padding: '0.875rem',
+              border: '1px solid #d1d5db',
+              borderRadius: '0.5rem',
+              background: '#ffffff',
+              color: '#374151',
+              cursor: 'pointer',
+              marginBottom: '0.75rem',
+              fontSize: '0.875rem',
+              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem'
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24">
+              <path fill="#000000" d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+            </svg>
+            Continue with Apple
+          </button>
+
+          {/* Phone OAuth */}
+          <button
+            onClick={() => alert('Phone authentication would be implemented here')}
+            style={{
+              width: '100%',
+              padding: '0.875rem',
+              border: '1px solid #d1d5db',
+              borderRadius: '0.5rem',
+              background: '#ffffff',
+              color: '#374151',
+              cursor: 'pointer',
+              marginBottom: '0.75rem',
+              fontSize: '0.875rem',
+              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem'
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            Continue with phone
           </button>
         </div>
-      </div>
+
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: '1.5rem'
+        }}>
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }}></div>
+          <span style={{ padding: '0 1rem', color: '#6b7280', fontSize: '0.875rem' }}>OR</span>
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }}></div>
+        </div>
+
+        <input
+          type="email"
+          placeholder="Email address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '0.875rem',
+            border: '2px solid #3b82f6',
+            borderRadius: '0.5rem',
+            fontSize: '0.875rem',
+            outline: 'none',
+            marginBottom: '1rem',
+            fontFamily: 'inherit',
+            boxSizing: 'border-box'
+          }}
+        />
+
+        <button
+          onClick={() => handleEmailLogin(email)}
+          style={{
+            width: '100%',
+            padding: '0.875rem',
+            backgroundColor: '#000000',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '0.5rem',
+            cursor: 'pointer',
+            fontSize: '0.875rem',
+            fontWeight: '500',
+            fontFamily: 'inherit'
+          }}
+        >
+          Continue
+        </button>
+      </ModalBase>
     );
   };
 
-  // Dashboard Component
-  const Dashboard = () => (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#ffffff',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      display: 'flex'
-    }}>
-      {/* Sidebar */}
+  // Dashboard Component - USING SAFE CHAT SCAFFOLD
+  const Dashboard = () => {
+    const header = (
       <div style={{
-        width: sidebarCollapsed ? '60px' : '260px',
-        backgroundColor: '#f8f9fa',
-        borderRight: '1px solid #e5e7eb',
         display: 'flex',
-        flexDirection: 'column',
-        transition: 'width 0.2s ease',
-        zIndex: 10
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '1rem 2rem',
+        backgroundColor: '#f8f9fa'
       }}>
         <div style={{
-          padding: '1rem',
-          borderBottom: '1px solid #e5e7eb',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: sidebarCollapsed ? 'center' : 'space-between'
+          gap: '1rem'
         }}>
-          {!sidebarCollapsed && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '1.125rem',
-              fontWeight: '600'
-            }}>
-              <Shield size={20} />
-              Eezlegal
-            </div>
-          )}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             style={{
@@ -553,105 +474,47 @@ const EezLegalApp = () => {
           >
             <Menu size={20} />
           </button>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '1.125rem',
+            fontWeight: '600'
+          }}>
+            <Shield size={20} />
+            Eezlegal
+          </div>
         </div>
-
-        <div style={{ padding: '1rem' }}>
+        
+        <div style={{ position: 'relative' }}>
           <button
-            onClick={() => {
-              setMessages([]);
-              setInputText('');
-            }}
+            onClick={() => setShowUserMenu(!showUserMenu)}
             style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: '#ffffff',
-              border: '1px solid #d1d5db',
-              borderRadius: '0.375rem',
+              background: 'transparent',
+              border: 'none',
               cursor: 'pointer',
-              fontSize: '0.875rem',
+              padding: '0.5rem',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
               gap: '0.5rem',
-              fontFamily: 'inherit'
+              fontSize: '0.875rem'
             }}
           >
-            <span style={{ fontSize: '1.25rem' }}>+</span>
-            {!sidebarCollapsed && 'New Chat'}
+            <User size={16} />
+            User
           </button>
-        </div>
-
-        {!sidebarCollapsed && chatHistory.length > 0 && (
-          <div style={{ flex: 1, padding: '0 1rem' }}>
-            <h3 style={{
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              color: '#6b7280',
-              marginBottom: '0.5rem'
-            }}>
-              Recent Chats
-            </h3>
-            {chatHistory.map((chat, index) => (
-              <button
-                key={index}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  textAlign: 'left',
-                  marginBottom: '0.25rem',
-                  color: '#374151',
-                  fontFamily: 'inherit'
-                }}
-              >
-                {chat}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div style={{
-          padding: '1rem',
-          borderTop: '1px solid #e5e7eb',
-          position: 'relative'
-        }}>
-          {!sidebarCollapsed && (
-            <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                backgroundColor: 'transparent',
-                border: 'none',
-                borderRadius: '0.375rem',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontFamily: 'inherit'
-              }}
-            >
-              <User size={16} />
-              User
-            </button>
-          )}
           
           {showUserMenu && (
             <div style={{
               position: 'absolute',
-              bottom: '100%',
-              left: '1rem',
-              right: '1rem',
+              top: '100%',
+              right: 0,
               backgroundColor: '#ffffff',
               border: '1px solid #d1d5db',
               borderRadius: '0.375rem',
               boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-              zIndex: 100
+              zIndex: 100,
+              minWidth: '150px'
             }}>
               <button
                 onClick={() => {
@@ -698,23 +561,18 @@ const EezLegalApp = () => {
           )}
         </div>
       </div>
+    );
 
-      {/* Main Content - SAFE LAYOUT SCAFFOLD */}
-      <main style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh'
-      }}>
+    const messagesContent = (
+      <div style={{ padding: '2rem' }}>
         {messages.length === 0 ? (
-          <section style={{
-            flex: 1,
+          <div style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '2rem',
-            overflow: 'auto'
+            height: '100%',
+            minHeight: '400px'
           }}>
             <h1 style={{
               fontSize: '2rem',
@@ -725,13 +583,9 @@ const EezLegalApp = () => {
             }}>
               How can we help?
             </h1>
-          </section>
+          </div>
         ) : (
-          <section style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '2rem'
-          }}>
+          <div>
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -756,246 +610,207 @@ const EezLegalApp = () => {
                 </div>
               </div>
             ))}
-          </section>
+          </div>
         )}
+      </div>
+    );
 
-        {/* COMPOSER FOOTER - FLEX-NONE TO PREVENT SQUEEZING */}
-        <footer style={{
-          flex: '0 0 auto',
-          borderTop: '1px solid #e5e7eb',
-          backgroundColor: '#ffffff',
-          padding: '1rem 2rem',
+    const composerContent = (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+        alignItems: 'center'
+      }}>
+        <ComposerInput placeholder="Type your message..." />
+        
+        <button style={{
+          background: 'transparent',
+          color: '#6b7280',
+          border: '1px solid #d1d5db',
+          padding: '0.75rem 1.25rem',
+          borderRadius: '2rem',
+          cursor: 'pointer',
+          fontSize: '0.875rem',
           display: 'flex',
-          flexDirection: 'column',
+          alignItems: 'center',
           gap: '0.5rem',
-          position: 'relative',
-          zIndex: 2000
+          fontFamily: 'inherit',
+          alignSelf: 'flex-start'
         }}>
-          <ComposerInput placeholder="Type your message..." />
-          
-          <button style={{
-            background: 'transparent',
-            color: '#6b7280',
-            border: '1px solid #d1d5db',
-            padding: '0.75rem 1.25rem',
-            borderRadius: '2rem',
-            cursor: 'pointer',
-            fontSize: '0.875rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontFamily: 'inherit',
-            alignSelf: 'flex-start'
-          }}>
-            <Paperclip size={16} />
-            Attach
-          </button>
-        </footer>
-      </main>
-    </div>
-  );
-
-  // Settings Modal - PROPER UNMOUNTING
-  const SettingsModal = () => {
-    // ONLY RENDER IF showSettings IS TRUE
-    if (!showSettings) return null;
+          <Paperclip size={16} />
+          Attach
+        </button>
+      </div>
+    );
 
     return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '1rem',
-        pointerEvents: 'auto'
-      }}>
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '0.75rem',
-          padding: '2rem',
-          maxWidth: '600px',
-          width: '100%',
-          position: 'relative',
-          display: 'flex',
-          zIndex: 1001,
-          pointerEvents: 'auto'
-        }}>
-          <button
-            onClick={() => setShowSettings(false)}
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              right: '1rem',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              zIndex: 1002
-            }}
-          >
-            <X size={20} />
-          </button>
+      <SafeChatScaffold
+        header={header}
+        messages={messagesContent}
+        composer={composerContent}
+      />
+    );
+  };
 
-          {/* Settings Sidebar */}
-          <div style={{
-            width: '200px',
-            borderRight: '1px solid #e5e7eb',
-            paddingRight: '2rem',
-            marginRight: '2rem'
+  // Settings Modal - USING NEW MODAL BASE
+  const SettingsModal = () => (
+    <ModalBase open={showSettings} onClose={() => setShowSettings(false)}>
+      <div style={{ display: 'flex', minHeight: '400px' }}>
+        {/* Settings Sidebar */}
+        <div style={{
+          width: '200px',
+          borderRight: '1px solid #e5e7eb',
+          paddingRight: '2rem',
+          marginRight: '2rem'
+        }}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: '600',
+            color: '#000000',
+            marginBottom: '2rem'
           }}>
-            <h2 style={{
-              fontSize: '1.5rem',
-              fontWeight: '600',
-              color: '#000000',
-              marginBottom: '2rem'
-            }}>
-              Settings
-            </h2>
-            <div style={{
+            Settings
+          </h2>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem'
+          }}>
+            <button style={{
+              padding: '0.75rem',
+              backgroundColor: '#f3f4f6',
+              border: 'none',
+              borderRadius: '0.375rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
               display: 'flex',
-              flexDirection: 'column',
-              gap: '0.5rem'
+              alignItems: 'center',
+              gap: '0.5rem',
+              textAlign: 'left',
+              fontFamily: 'inherit'
             }}>
-              <button style={{
+              <Settings size={16} />
+              General
+            </button>
+            <button style={{
+              padding: '0.75rem',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '0.375rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              textAlign: 'left',
+              fontFamily: 'inherit',
+              color: '#6b7280'
+            }}>
+              <User size={16} />
+              Account
+            </button>
+            <button style={{
+              padding: '0.75rem',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '0.375rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              textAlign: 'left',
+              fontFamily: 'inherit',
+              color: '#6b7280'
+            }}>
+              <Shield size={16} />
+              Data Controls
+            </button>
+          </div>
+        </div>
+
+        {/* Settings Content */}
+        <div style={{ flex: 1 }}>
+          <h3 style={{
+            fontSize: '1.25rem',
+            fontWeight: '600',
+            color: '#000000',
+            marginBottom: '2rem'
+          }}>
+            General
+          </h3>
+
+          <div style={{ marginBottom: '2rem' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '0.5rem'
+            }}>
+              Theme
+            </label>
+            <select
+              value={currentTheme}
+              onChange={(e) => setCurrentTheme(e.target.value)}
+              style={{
+                width: '100%',
                 padding: '0.75rem',
-                backgroundColor: '#f3f4f6',
-                border: 'none',
+                border: '1px solid #d1d5db',
                 borderRadius: '0.375rem',
-                cursor: 'pointer',
                 fontSize: '0.875rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                textAlign: 'left',
-                fontFamily: 'inherit'
-              }}>
-                <Settings size={16} />
-                General
-              </button>
-              <button style={{
-                padding: '0.75rem',
-                backgroundColor: 'transparent',
-                border: 'none',
-                borderRadius: '0.375rem',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                textAlign: 'left',
                 fontFamily: 'inherit',
-                color: '#6b7280'
-              }}>
-                <User size={16} />
-                Account
-              </button>
-              <button style={{
-                padding: '0.75rem',
-                backgroundColor: 'transparent',
-                border: 'none',
-                borderRadius: '0.375rem',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                textAlign: 'left',
-                fontFamily: 'inherit',
-                color: '#6b7280'
-              }}>
-                <Shield size={16} />
-                Data Controls
-              </button>
-            </div>
+                backgroundColor: '#ffffff',
+                cursor: 'pointer'
+              }}
+            >
+              <option>Light</option>
+              <option>Dark</option>
+              <option>System</option>
+            </select>
           </div>
 
-          {/* Settings Content */}
-          <div style={{ flex: 1 }}>
-            <h3 style={{
-              fontSize: '1.25rem',
-              fontWeight: '600',
-              color: '#000000',
-              marginBottom: '2rem'
+          <div style={{ marginBottom: '2rem' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '0.5rem'
             }}>
-              General
-            </h3>
-
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{
-                display: 'block',
+              Language
+            </label>
+            <select
+              value={currentLanguage}
+              onChange={(e) => setCurrentLanguage(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '0.375rem',
                 fontSize: '0.875rem',
-                fontWeight: '500',
-                color: '#374151',
-                marginBottom: '0.5rem'
-              }}>
-                Theme
-              </label>
-              <select
-                value={currentTheme}
-                onChange={(e) => setCurrentTheme(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  fontFamily: 'inherit',
-                  backgroundColor: '#ffffff',
-                  cursor: 'pointer'
-                }}
-              >
-                <option>Light</option>
-                <option>Dark</option>
-                <option>System</option>
-              </select>
-            </div>
-
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                color: '#374151',
-                marginBottom: '0.5rem'
-              }}>
-                Language
-              </label>
-              <select
-                value={currentLanguage}
-                onChange={(e) => setCurrentLanguage(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  fontFamily: 'inherit',
-                  backgroundColor: '#ffffff',
-                  cursor: 'pointer'
-                }}
-              >
-                <option>Auto-detect</option>
-                <option>English (US)</option>
-                <option>Dutch</option>
-                <option>Espanola</option>
-                <option>French</option>
-              </select>
-            </div>
+                fontFamily: 'inherit',
+                backgroundColor: '#ffffff',
+                cursor: 'pointer'
+              }}
+            >
+              <option>Auto-detect</option>
+              <option>English (US)</option>
+              <option>Dutch</option>
+              <option>Espanola</option>
+              <option>French</option>
+            </select>
           </div>
         </div>
       </div>
-    );
-  };
+    </ModalBase>
+  );
 
   return (
     <div>
       {isLoggedIn ? <Dashboard /> : <Homepage />}
-      {/* MODALS ONLY RENDER WHEN THEIR STATE IS TRUE - PROPER UNMOUNTING */}
+      {/* MODALS USING NEW MODAL BASE - PROPER UNMOUNTING */}
       <AuthModal />
       <SettingsModal />
     </div>

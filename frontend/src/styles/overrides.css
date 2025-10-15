@@ -1,0 +1,16 @@
+/* Optional global overrides. Import once in your main entry (e.g., src/main.jsx).
+   Ensures composer textareas are never collapsed even if Tailwind is purged. */
+
+textarea[data-slot="textarea"] {
+  min-height: 6rem;    /* fallback height */
+  line-height: 1.5;
+}
+
+/* Temporary debug helpers */
+.debug-composer-outline {
+  outline: 2px solid red;
+}
+
+.z-max {
+  z-index: 2147483647;
+}
