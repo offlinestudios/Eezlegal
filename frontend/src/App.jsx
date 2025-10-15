@@ -21,8 +21,9 @@ const EezLegalApp = () => {
   const [currentTheme, setCurrentTheme] = useState('Light');
   const [currentLanguage, setCurrentLanguage] = useState('Auto-detect');
 
-  // PROPER CONTROLLED INPUT HANDLERS
+  // FIXED INPUT HANDLERS - DIRECT AND SIMPLE
   const handleInputChange = (e) => {
+    console.log('Input change:', e.target.value); // Debug log
     setInputText(e.target.value);
   };
 
@@ -96,13 +97,14 @@ const EezLegalApp = () => {
     setShowUserMenu(false);
   };
 
-  // FIXED COMPOSER COMPONENT - USING PROPER TEXTAREA
+  // FIXED COMPOSER COMPONENT - HIGH Z-INDEX AND PROPER LAYOUT
   const ComposerInput = ({ placeholder }) => (
     <div style={{
-      width: '100%',
-      maxWidth: '700px',
       position: 'relative',
-      zIndex: 50 // High z-index to prevent overlay interference
+      zIndex: 2001, // VERY HIGH Z-INDEX TO PREVENT OVERLAY BLOCKING
+      outline: '2px solid transparent', // Debug outline (can be removed)
+      width: '100%',
+      maxWidth: '700px'
     }}>
       <Textarea
         placeholder={placeholder}
@@ -114,7 +116,9 @@ const EezLegalApp = () => {
           borderRadius: '2rem',
           minHeight: '3.5rem',
           maxHeight: '8rem',
-          resize: 'none'
+          resize: 'none',
+          position: 'relative',
+          zIndex: 2002
         }}
       />
       <button
@@ -135,7 +139,7 @@ const EezLegalApp = () => {
           alignItems: 'center',
           justifyContent: 'center',
           cursor: inputText.trim() ? 'pointer' : 'not-allowed',
-          zIndex: 51 // Higher than textarea
+          zIndex: 2003 // Higher than textarea
         }}
       >
         <Send size={20} />
@@ -207,7 +211,7 @@ const EezLegalApp = () => {
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main Content - SAFE LAYOUT SCAFFOLD */}
       <main style={{
         flex: 1,
         display: 'flex',
@@ -218,6 +222,7 @@ const EezLegalApp = () => {
         maxWidth: '900px',
         margin: '0 auto',
         width: '100%',
+        position: 'relative',
         zIndex: 1
       }}>
         <h1 style={{
@@ -230,48 +235,72 @@ const EezLegalApp = () => {
           Eezlegal
         </h1>
 
-        <div style={{ marginBottom: '1.5rem' }}>
-          <ComposerInput placeholder="Tell us your legal problem..." />
-        </div>
-
-        <button style={{
-          background: 'transparent',
-          color: '#6b7280',
-          border: '1px solid #d1d5db',
-          padding: '0.75rem 1.25rem',
-          borderRadius: '2rem',
-          cursor: 'pointer',
-          fontSize: '0.875rem',
+        {/* COMPOSER FOOTER - FLEX-NONE TO PREVENT SQUEEZING */}
+        <footer style={{
+          flex: '0 0 auto',
+          width: '100%',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          gap: '0.5rem',
-          fontFamily: 'inherit'
+          gap: '1.5rem',
+          padding: '1rem',
+          backgroundColor: '#ffffff',
+          position: 'relative',
+          zIndex: 2000
         }}>
-          <Paperclip size={16} />
-          Attach
-        </button>
+          <ComposerInput placeholder="Tell us your legal problem..." />
+          
+          <button style={{
+            background: 'transparent',
+            color: '#6b7280',
+            border: '1px solid #d1d5db',
+            padding: '0.75rem 1.25rem',
+            borderRadius: '2rem',
+            cursor: 'pointer',
+            fontSize: '0.875rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontFamily: 'inherit'
+          }}>
+            <Paperclip size={16} />
+            Attach
+          </button>
+        </footer>
       </main>
     </div>
   );
 
-  // Authentication Modal - PROPER Z-INDEX MANAGEMENT
+  // Authentication Modal - PROPER UNMOUNTING AND POINTER EVENTS
   const AuthModal = () => {
     const [email, setEmail] = useState('');
 
+    // ONLY RENDER IF showAuthModal IS TRUE
+    if (!showAuthModal) return null;
+
     return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000, // High z-index for modal
-        padding: '1rem'
-      }}>
+      <div 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem',
+          pointerEvents: 'auto' // Ensure modal can receive events
+        }}
+        onClick={(e) => {
+          // Close modal when clicking backdrop
+          if (e.target === e.currentTarget) {
+            setShowAuthModal(false);
+          }
+        }}
+      >
         <div style={{
           backgroundColor: '#ffffff',
           borderRadius: '0.75rem',
@@ -279,7 +308,8 @@ const EezLegalApp = () => {
           maxWidth: '420px',
           width: '100%',
           position: 'relative',
-          zIndex: 1001
+          zIndex: 1001,
+          pointerEvents: 'auto'
         }}>
           <button
             onClick={() => setShowAuthModal(false)}
@@ -669,16 +699,22 @@ const EezLegalApp = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      {/* Main Content - SAFE LAYOUT SCAFFOLD */}
+      <main style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh'
+      }}>
         {messages.length === 0 ? (
-          <div style={{
+          <section style={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '2rem'
+            padding: '2rem',
+            overflow: 'auto'
           }}>
             <h1 style={{
               fontSize: '2rem',
@@ -689,291 +725,279 @@ const EezLegalApp = () => {
             }}>
               How can we help?
             </h1>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <ComposerInput placeholder="Tell us your legal problem..." />
-            </div>
-
-            <button style={{
-              background: 'transparent',
-              color: '#6b7280',
-              border: '1px solid #d1d5db',
-              padding: '0.75rem 1.25rem',
-              borderRadius: '2rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontFamily: 'inherit'
-            }}>
-              <Paperclip size={16} />
-              Attach
-            </button>
-          </div>
+          </section>
         ) : (
-          <div style={{
+          <section style={{
             flex: 1,
-            display: 'flex',
-            flexDirection: 'column'
+            overflowY: 'auto',
+            padding: '2rem'
           }}>
-            <div style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '2rem'
-            }}>
-              {messages.map((message) => (
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                style={{
+                  marginBottom: '1.5rem',
+                  display: 'flex',
+                  justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start'
+                }}
+              >
                 <div
-                  key={message.id}
                   style={{
-                    marginBottom: '1.5rem',
-                    display: 'flex',
-                    justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start'
+                    maxWidth: '70%',
+                    padding: '1rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: message.sender === 'user' ? '#e5e7eb' : '#ffffff',
+                    border: message.sender === 'ai' ? '1px solid #e5e7eb' : 'none',
+                    whiteSpace: 'pre-wrap',
+                    lineHeight: '1.5'
                   }}
                 >
-                  <div
-                    style={{
-                      maxWidth: '70%',
-                      padding: '1rem',
-                      borderRadius: '0.75rem',
-                      backgroundColor: message.sender === 'user' ? '#e5e7eb' : '#ffffff',
-                      border: message.sender === 'ai' ? '1px solid #e5e7eb' : 'none',
-                      whiteSpace: 'pre-wrap',
-                      lineHeight: '1.5'
-                    }}
-                  >
-                    {message.text}
-                  </div>
+                  {message.text}
                 </div>
-              ))}
-            </div>
-
-            <div style={{
-              padding: '1rem 2rem',
-              borderTop: '1px solid #e5e7eb'
-            }}>
-              <div style={{ marginBottom: '0.5rem' }}>
-                <ComposerInput placeholder="Type your message..." />
               </div>
-              
+            ))}
+          </section>
+        )}
+
+        {/* COMPOSER FOOTER - FLEX-NONE TO PREVENT SQUEEZING */}
+        <footer style={{
+          flex: '0 0 auto',
+          borderTop: '1px solid #e5e7eb',
+          backgroundColor: '#ffffff',
+          padding: '1rem 2rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem',
+          position: 'relative',
+          zIndex: 2000
+        }}>
+          <ComposerInput placeholder="Type your message..." />
+          
+          <button style={{
+            background: 'transparent',
+            color: '#6b7280',
+            border: '1px solid #d1d5db',
+            padding: '0.75rem 1.25rem',
+            borderRadius: '2rem',
+            cursor: 'pointer',
+            fontSize: '0.875rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontFamily: 'inherit',
+            alignSelf: 'flex-start'
+          }}>
+            <Paperclip size={16} />
+            Attach
+          </button>
+        </footer>
+      </main>
+    </div>
+  );
+
+  // Settings Modal - PROPER UNMOUNTING
+  const SettingsModal = () => {
+    // ONLY RENDER IF showSettings IS TRUE
+    if (!showSettings) return null;
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '1rem',
+        pointerEvents: 'auto'
+      }}>
+        <div style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '0.75rem',
+          padding: '2rem',
+          maxWidth: '600px',
+          width: '100%',
+          position: 'relative',
+          display: 'flex',
+          zIndex: 1001,
+          pointerEvents: 'auto'
+        }}>
+          <button
+            onClick={() => setShowSettings(false)}
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              zIndex: 1002
+            }}
+          >
+            <X size={20} />
+          </button>
+
+          {/* Settings Sidebar */}
+          <div style={{
+            width: '200px',
+            borderRight: '1px solid #e5e7eb',
+            paddingRight: '2rem',
+            marginRight: '2rem'
+          }}>
+            <h2 style={{
+              fontSize: '1.5rem',
+              fontWeight: '600',
+              color: '#000000',
+              marginBottom: '2rem'
+            }}>
+              Settings
+            </h2>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem'
+            }}>
               <button style={{
-                background: 'transparent',
-                color: '#6b7280',
-                border: '1px solid #d1d5db',
-                padding: '0.75rem 1.25rem',
-                borderRadius: '2rem',
+                padding: '0.75rem',
+                backgroundColor: '#f3f4f6',
+                border: 'none',
+                borderRadius: '0.375rem',
                 cursor: 'pointer',
                 fontSize: '0.875rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
+                textAlign: 'left',
                 fontFamily: 'inherit'
               }}>
-                <Paperclip size={16} />
-                Attach
+                <Settings size={16} />
+                General
+              </button>
+              <button style={{
+                padding: '0.75rem',
+                backgroundColor: 'transparent',
+                border: 'none',
+                borderRadius: '0.375rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                textAlign: 'left',
+                fontFamily: 'inherit',
+                color: '#6b7280'
+              }}>
+                <User size={16} />
+                Account
+              </button>
+              <button style={{
+                padding: '0.75rem',
+                backgroundColor: 'transparent',
+                border: 'none',
+                borderRadius: '0.375rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                textAlign: 'left',
+                fontFamily: 'inherit',
+                color: '#6b7280'
+              }}>
+                <Shield size={16} />
+                Data Controls
               </button>
             </div>
           </div>
-        )}
-      </div>
-    </div>
-  );
 
-  // Settings Modal
-  const SettingsModal = () => (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '1rem'
-    }}>
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '0.75rem',
-        padding: '2rem',
-        maxWidth: '600px',
-        width: '100%',
-        position: 'relative',
-        display: 'flex',
-        zIndex: 1001
-      }}>
-        <button
-          onClick={() => setShowSettings(false)}
-          style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            zIndex: 1002
-          }}
-        >
-          <X size={20} />
-        </button>
-
-        {/* Settings Sidebar */}
-        <div style={{
-          width: '200px',
-          borderRight: '1px solid #e5e7eb',
-          paddingRight: '2rem',
-          marginRight: '2rem'
-        }}>
-          <h2 style={{
-            fontSize: '1.5rem',
-            fontWeight: '600',
-            color: '#000000',
-            marginBottom: '2rem'
-          }}>
-            Settings
-          </h2>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.5rem'
-          }}>
-            <button style={{
-              padding: '0.75rem',
-              backgroundColor: '#f3f4f6',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              textAlign: 'left',
-              fontFamily: 'inherit'
+          {/* Settings Content */}
+          <div style={{ flex: 1 }}>
+            <h3 style={{
+              fontSize: '1.25rem',
+              fontWeight: '600',
+              color: '#000000',
+              marginBottom: '2rem'
             }}>
-              <Settings size={16} />
               General
-            </button>
-            <button style={{
-              padding: '0.75rem',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              textAlign: 'left',
-              fontFamily: 'inherit',
-              color: '#6b7280'
-            }}>
-              <User size={16} />
-              Account
-            </button>
-            <button style={{
-              padding: '0.75rem',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              textAlign: 'left',
-              fontFamily: 'inherit',
-              color: '#6b7280'
-            }}>
-              <Shield size={16} />
-              Data Controls
-            </button>
-          </div>
-        </div>
+            </h3>
 
-        {/* Settings Content */}
-        <div style={{ flex: 1 }}>
-          <h3 style={{
-            fontSize: '1.25rem',
-            fontWeight: '600',
-            color: '#000000',
-            marginBottom: '2rem'
-          }}>
-            General
-          </h3>
-
-          <div style={{ marginBottom: '2rem' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: '0.5rem'
-            }}>
-              Theme
-            </label>
-            <select
-              value={currentTheme}
-              onChange={(e) => setCurrentTheme(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.375rem',
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{
+                display: 'block',
                 fontSize: '0.875rem',
-                fontFamily: 'inherit',
-                backgroundColor: '#ffffff',
-                cursor: 'pointer'
-              }}
-            >
-              <option>Light</option>
-              <option>Dark</option>
-              <option>System</option>
-            </select>
-          </div>
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '0.5rem'
+              }}>
+                Theme
+              </label>
+              <select
+                value={currentTheme}
+                onChange={(e) => setCurrentTheme(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.375rem',
+                  fontSize: '0.875rem',
+                  fontFamily: 'inherit',
+                  backgroundColor: '#ffffff',
+                  cursor: 'pointer'
+                }}
+              >
+                <option>Light</option>
+                <option>Dark</option>
+                <option>System</option>
+              </select>
+            </div>
 
-          <div style={{ marginBottom: '2rem' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: '0.5rem'
-            }}>
-              Language
-            </label>
-            <select
-              value={currentLanguage}
-              onChange={(e) => setCurrentLanguage(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.375rem',
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{
+                display: 'block',
                 fontSize: '0.875rem',
-                fontFamily: 'inherit',
-                backgroundColor: '#ffffff',
-                cursor: 'pointer'
-              }}
-            >
-              <option>Auto-detect</option>
-              <option>English (US)</option>
-              <option>Dutch</option>
-              <option>Espanola</option>
-              <option>French</option>
-            </select>
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '0.5rem'
+              }}>
+                Language
+              </label>
+              <select
+                value={currentLanguage}
+                onChange={(e) => setCurrentLanguage(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.375rem',
+                  fontSize: '0.875rem',
+                  fontFamily: 'inherit',
+                  backgroundColor: '#ffffff',
+                  cursor: 'pointer'
+                }}
+              >
+                <option>Auto-detect</option>
+                <option>English (US)</option>
+                <option>Dutch</option>
+                <option>Espanola</option>
+                <option>French</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div>
       {isLoggedIn ? <Dashboard /> : <Homepage />}
-      {showAuthModal && <AuthModal />}
-      {showSettings && <SettingsModal />}
+      {/* MODALS ONLY RENDER WHEN THEIR STATE IS TRUE - PROPER UNMOUNTING */}
+      <AuthModal />
+      <SettingsModal />
     </div>
   );
 };
