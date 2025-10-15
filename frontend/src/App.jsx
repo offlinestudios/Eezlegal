@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, Send, Paperclip, Menu, X, Settings, User, LogOut } from 'lucide-react';
+import { Textarea } from './components/ui/textarea';
 
 const EezLegalApp = () => {
   // ISOLATED INPUT STATE - COMPLETELY SEPARATE FROM OTHER FEATURES
@@ -20,9 +21,9 @@ const EezLegalApp = () => {
   const [currentTheme, setCurrentTheme] = useState('Light');
   const [currentLanguage, setCurrentLanguage] = useState('Auto-detect');
 
-  // ISOLATED INPUT HANDLERS - NO INTERFERENCE FROM OTHER FEATURES
-  const handleInputChange = (event) => {
-    setInputText(event.target.value);
+  // PROPER CONTROLLED INPUT HANDLERS
+  const handleInputChange = (e) => {
+    setInputText(e.target.value);
   };
 
   const handleSendMessage = () => {
@@ -57,9 +58,9 @@ const EezLegalApp = () => {
     }, 1000);
   };
 
-  const handleKeyDown = (event) => {
-    if (event.key === 'Enter' && inputText.trim()) {
-      event.preventDefault();
+  const handleKeyDown = (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
       handleSendMessage();
     }
   };
@@ -95,41 +96,25 @@ const EezLegalApp = () => {
     setShowUserMenu(false);
   };
 
-  // COMPLETELY ISOLATED INPUT COMPONENT - HIGH Z-INDEX, NO INTERFERENCE
-  const IsolatedInput = ({ placeholder }) => (
+  // FIXED COMPOSER COMPONENT - USING PROPER TEXTAREA
+  const ComposerInput = ({ placeholder }) => (
     <div style={{
       width: '100%',
       maxWidth: '700px',
       position: 'relative',
-      zIndex: 50, // High z-index to prevent overlay interference
-      outline: '2px solid transparent' // Debug outline removed
+      zIndex: 50 // High z-index to prevent overlay interference
     }}>
-      <textarea
+      <Textarea
         placeholder={placeholder}
         value={inputText}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
-        rows={1}
         style={{
-          width: '100%',
-          minHeight: '3.5rem', // Proper minimum height
-          maxHeight: '8rem',
-          padding: '1.25rem 4.5rem 1.25rem 1.75rem',
-          border: '1px solid #d1d5db',
+          paddingRight: '4rem', // Space for send button
           borderRadius: '2rem',
-          fontSize: '1rem',
-          outline: 'none',
-          fontFamily: 'inherit',
-          boxSizing: 'border-box',
-          backgroundColor: '#ffffff',
-          resize: 'none',
-          overflow: 'hidden',
-          lineHeight: '1.5'
-        }}
-        onInput={(e) => {
-          // Auto-resize textarea
-          e.target.style.height = 'auto';
-          e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px';
+          minHeight: '3.5rem',
+          maxHeight: '8rem',
+          resize: 'none'
         }}
       />
       <button
@@ -150,7 +135,7 @@ const EezLegalApp = () => {
           alignItems: 'center',
           justifyContent: 'center',
           cursor: inputText.trim() ? 'pointer' : 'not-allowed',
-          zIndex: 51 // Higher than input
+          zIndex: 51 // Higher than textarea
         }}
       >
         <Send size={20} />
@@ -246,7 +231,7 @@ const EezLegalApp = () => {
         </h1>
 
         <div style={{ marginBottom: '1.5rem' }}>
-          <IsolatedInput placeholder="Tell us your legal problem..." />
+          <ComposerInput placeholder="Tell us your legal problem..." />
         </div>
 
         <button style={{
@@ -706,7 +691,7 @@ const EezLegalApp = () => {
             </h1>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <IsolatedInput placeholder="Tell us your legal problem..." />
+              <ComposerInput placeholder="Tell us your legal problem..." />
             </div>
 
             <button style={{
@@ -768,7 +753,7 @@ const EezLegalApp = () => {
               borderTop: '1px solid #e5e7eb'
             }}>
               <div style={{ marginBottom: '0.5rem' }}>
-                <IsolatedInput placeholder="Type your message..." />
+                <ComposerInput placeholder="Type your message..." />
               </div>
               
               <button style={{
