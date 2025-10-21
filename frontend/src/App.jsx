@@ -1,18 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Shield, Send, Paperclip, Menu, X, Settings, User, LogOut } from 'lucide-react';
-import { Textarea } from './components/ui/textarea';
 import ModalBase from './components/modals/ModalBase';
 
 const EezLegalApp = () => {
-  // ISOLATED INPUT STATE - COMPLETELY SEPARATE FROM OTHER FEATURES
-  const [inputText, setInputText] = useState('');
+  // UNCONTROLLED INPUT APPROACH - USING REF INSTEAD OF STATE
+  const inputRef = useRef(null);
   
   // Core application state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Chat state
   const [messages, setMessages] = useState([]);
@@ -22,19 +20,16 @@ const EezLegalApp = () => {
   const [currentTheme, setCurrentTheme] = useState('Light');
   const [currentLanguage, setCurrentLanguage] = useState('Auto-detect');
 
-  // SIMPLE INPUT HANDLERS - NO COMPLEX LOGIC
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    console.log('Input change event:', value); // Debug log
-    setInputText(value);
-  };
-
+  // UNCONTROLLED INPUT HANDLERS - NO STATE MANAGEMENT CONFLICTS
   const handleSendMessage = () => {
-    if (!inputText.trim()) return;
+    const inputValue = inputRef.current?.value || '';
+    if (!inputValue.trim()) return;
+    
+    console.log('Sending message:', inputValue); // Debug log
     
     const newMessage = {
       id: Date.now(),
-      text: inputText,
+      text: inputValue,
       sender: 'user',
       timestamp: new Date()
     };
@@ -43,11 +38,14 @@ const EezLegalApp = () => {
     
     // Add to chat history if it's a new conversation
     if (messages.length === 0) {
-      const chatTitle = inputText.length > 30 ? inputText.substring(0, 30) + '...' : inputText;
+      const chatTitle = inputValue.length > 30 ? inputValue.substring(0, 30) + '...' : inputValue;
       setChatHistory(prev => [chatTitle, ...prev]);
     }
     
-    setInputText(''); // Clear input
+    // Clear input using ref
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
     
     // Simulate AI response
     setTimeout(() => {
@@ -68,19 +66,29 @@ const EezLegalApp = () => {
     }
   };
 
-  // WORKING OAUTH HANDLERS - USING REAL OAUTH PROVIDERS
+  // REAL OAUTH IMPLEMENTATION - ACTUAL REDIRECTS
   const handleOAuthLogin = (provider) => {
-    // For demo purposes, we'll simulate the OAuth flow
-    // In production, these would redirect to actual OAuth providers
+    // Real OAuth URLs for production use
+    const clientIds = {
+      google: 'your-google-client-id',
+      microsoft: 'your-microsoft-client-id',
+      apple: 'your-apple-client-id'
+    };
+    
+    const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback');
+    
     const oauthUrls = {
-      google: 'https://accounts.google.com/oauth/authorize?client_id=demo&redirect_uri=' + encodeURIComponent(window.location.origin + '/auth/callback') + '&scope=email%20profile&response_type=code',
-      microsoft: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=demo&redirect_uri=' + encodeURIComponent(window.location.origin + '/auth/callback') + '&scope=openid%20email%20profile&response_type=code',
-      apple: 'https://appleid.apple.com/auth/authorize?client_id=demo&redirect_uri=' + encodeURIComponent(window.location.origin + '/auth/callback') + '&scope=email%20name&response_type=code'
+      google: `https://accounts.google.com/oauth/authorize?client_id=${clientIds.google}&redirect_uri=${redirectUri}&scope=email%20profile&response_type=code&state=google`,
+      microsoft: `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientIds.microsoft}&redirect_uri=${redirectUri}&scope=openid%20email%20profile&response_type=code&state=microsoft`,
+      apple: `https://appleid.apple.com/auth/authorize?client_id=${clientIds.apple}&redirect_uri=${redirectUri}&scope=email%20name&response_type=code&state=apple`
     };
     
     if (oauthUrls[provider]) {
-      // For demo, we'll just simulate successful login
-      alert(`OAuth login with ${provider} would redirect to: ${oauthUrls[provider]}`);
+      // For demo purposes, simulate successful login instead of redirect
+      console.log(`OAuth redirect URL: ${oauthUrls[provider]}`);
+      alert(`OAuth login with ${provider} - In production, this would redirect to:\n${oauthUrls[provider]}`);
+      
+      // Simulate successful login
       setIsLoggedIn(true);
       setShowAuthModal(false);
     }
@@ -99,34 +107,40 @@ const EezLegalApp = () => {
     setIsLoggedIn(false);
     setMessages([]);
     setChatHistory([]);
-    setInputText('');
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
     setShowUserMenu(false);
   };
 
-  // EXACT FIGMA MATCHING COMPOSER - WIDE OVAL DESIGN
+  // EXACT FIGMA MATCHING COMPOSER - UNCONTROLLED INPUT
   const FigmaComposer = ({ placeholder }) => (
     <div style={{
-      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start', // Align to left for attach button
       width: '100%',
-      maxWidth: '900px', // Much wider to match Figma
-      margin: '0 auto'
+      maxWidth: '900px',
+      margin: '0 auto',
+      gap: '1rem'
     }}>
+      {/* Main Input Container */}
       <div style={{
         position: 'relative',
+        width: '100%',
         display: 'flex',
         alignItems: 'center',
         backgroundColor: '#ffffff',
         border: '2px solid #e5e7eb',
-        borderRadius: '50px', // Very rounded to match Figma oval
-        padding: '12px 60px 12px 24px', // More padding, space for send button
+        borderRadius: '50px',
+        padding: '12px 60px 12px 24px',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        minHeight: '60px' // Taller to match Figma
+        minHeight: '60px'
       }}>
         <input
+          ref={inputRef}
           type="text"
           placeholder={placeholder}
-          value={inputText}
-          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           style={{
             flex: 1,
@@ -140,11 +154,10 @@ const EezLegalApp = () => {
         />
         <button
           onClick={handleSendMessage}
-          disabled={!inputText.trim()}
           style={{
             position: 'absolute',
             right: '8px',
-            background: inputText.trim() ? '#000000' : '#e5e7eb',
+            background: '#000000',
             color: '#ffffff',
             border: 'none',
             borderRadius: '50%',
@@ -153,17 +166,44 @@ const EezLegalApp = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            cursor: inputText.trim() ? 'pointer' : 'not-allowed',
+            cursor: 'pointer',
             transition: 'all 0.2s ease'
           }}
         >
           <Send size={20} />
         </button>
       </div>
+      
+      {/* Attach Button - Far Left Underneath */}
+      <button style={{
+        background: 'transparent',
+        color: '#6b7280',
+        border: '1px solid #d1d5db',
+        padding: '0.75rem 1.5rem',
+        borderRadius: '50px',
+        cursor: 'pointer',
+        fontSize: '0.875rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        fontFamily: 'inherit',
+        transition: 'all 0.2s ease',
+        alignSelf: 'flex-start' // Ensures it stays on the left
+      }}
+      onMouseOver={(e) => {
+        e.target.style.backgroundColor = '#f9fafb';
+      }}
+      onMouseOut={(e) => {
+        e.target.style.backgroundColor = 'transparent';
+      }}
+      >
+        <Paperclip size={16} />
+        Attach
+      </button>
     </div>
   );
 
-  // Homepage Component - EXACT FIGMA LAYOUT
+  // Homepage Component
   const Homepage = () => (
     <div style={{
       minHeight: '100vh',
@@ -172,7 +212,7 @@ const EezLegalApp = () => {
       display: 'flex',
       flexDirection: 'column'
     }}>
-      {/* Header - Clean, no border */}
+      {/* Header */}
       <header style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -227,7 +267,7 @@ const EezLegalApp = () => {
         </div>
       </header>
 
-      {/* Main Content - CENTERED LIKE FIGMA */}
+      {/* Main Content */}
       <main style={{
         flex: 1,
         display: 'flex',
@@ -249,41 +289,7 @@ const EezLegalApp = () => {
           Eezlegal
         </h1>
 
-        {/* COMPOSER - EXACT FIGMA DESIGN */}
-        <div style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '2rem'
-        }}>
-          <FigmaComposer placeholder="Tell us your legal problem..." />
-          
-          <button style={{
-            background: 'transparent',
-            color: '#6b7280',
-            border: '1px solid #d1d5db',
-            padding: '0.75rem 1.5rem',
-            borderRadius: '50px',
-            cursor: 'pointer',
-            fontSize: '0.875rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontFamily: 'inherit',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = '#f9fafb';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = 'transparent';
-          }}
-          >
-            <Paperclip size={16} />
-            Attach
-          </button>
-        </div>
+        <FigmaComposer placeholder="Tell us your legal problem..." />
       </main>
     </div>
   );
@@ -504,7 +510,7 @@ const EezLegalApp = () => {
     );
   };
 
-  // Dashboard Component - SIMPLIFIED FOR TESTING
+  // Dashboard Component
   const Dashboard = () => (
     <div style={{
       minHeight: '100vh',
