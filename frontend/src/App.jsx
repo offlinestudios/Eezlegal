@@ -3,10 +3,9 @@ import { Shield, Send, Paperclip, Menu, X, Settings, User, LogOut, Upload } from
 import ModalBase from './components/modals/ModalBase';
 
 const EezLegalApp = () => {
-  // FIXED INPUT APPROACH - USING BOTH REF AND STATE
+  // COMPLETELY UNCONTROLLED INPUT APPROACH
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
-  const [inputValue, setInputValue] = useState('');
   
   // Core application state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -23,16 +22,10 @@ const EezLegalApp = () => {
   const [currentTheme, setCurrentTheme] = useState('Light');
   const [currentLanguage, setCurrentLanguage] = useState('Auto-detect');
 
-  // FIXED INPUT HANDLERS - DUAL APPROACH FOR RELIABILITY
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    setInputValue(value);
-    console.log('Input changed:', value); // Debug log
-  };
-
+  // SIMPLE UNCONTROLLED INPUT HANDLERS
   const handleSendMessage = () => {
-    // Get value from both state and ref for reliability
-    const messageText = inputValue || (inputRef.current?.value) || '';
+    // Get value directly from DOM - NO REACT STATE
+    const messageText = inputRef.current?.value || '';
     if (!messageText.trim()) return;
     
     console.log('Sending message:', messageText); // Debug log
@@ -53,8 +46,7 @@ const EezLegalApp = () => {
       setChatHistory(prev => [chatTitle, ...prev]);
     }
     
-    // Clear input using both methods
-    setInputValue('');
+    // Clear input directly in DOM - NO REACT STATE
     if (inputRef.current) {
       inputRef.current.value = '';
     }
@@ -103,9 +95,8 @@ const EezLegalApp = () => {
     setAttachedFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
-  // REAL OAUTH IMPLEMENTATION WITH ENVIRONMENT VARIABLES
+  // OAUTH IMPLEMENTATION
   const handleOAuthLogin = (provider) => {
-    // Real OAuth configuration - these would be set in environment variables
     const oauthConfig = {
       google: {
         clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID || 'your-google-client-id.apps.googleusercontent.com',
@@ -127,7 +118,6 @@ const EezLegalApp = () => {
     const config = oauthConfig[provider];
     if (!config) return;
 
-    // Construct real OAuth URLs
     let oauthUrl = '';
     const state = `${provider}_${Date.now()}`;
     
@@ -162,14 +152,11 @@ const EezLegalApp = () => {
 
     console.log(`${provider} OAuth URL:`, oauthUrl);
 
-    // Check if we have real OAuth credentials
     if (config.clientId.includes('your-')) {
-      // Demo mode - show OAuth URL and simulate login
       alert(`OAuth Demo Mode\n\nProvider: ${provider}\nOAuth URL: ${oauthUrl}\n\nIn production, this would redirect to the OAuth provider. For demo purposes, logging you in...`);
       setIsLoggedIn(true);
       setShowAuthModal(false);
     } else {
-      // Production mode - actual redirect
       window.location.href = oauthUrl;
     }
   };
@@ -187,7 +174,6 @@ const EezLegalApp = () => {
     setIsLoggedIn(false);
     setMessages([]);
     setChatHistory([]);
-    setInputValue('');
     setAttachedFiles([]);
     if (inputRef.current) {
       inputRef.current.value = '';
@@ -195,8 +181,8 @@ const EezLegalApp = () => {
     setShowUserMenu(false);
   };
 
-  // FIXED FIGMA COMPOSER WITH WORKING INPUT
-  const FigmaComposer = ({ placeholder }) => (
+  // COMPLETELY UNCONTROLLED COMPOSER COMPONENT
+  const UncontrolledComposer = ({ placeholder }) => (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
@@ -242,7 +228,7 @@ const EezLegalApp = () => {
         </div>
       )}
 
-      {/* Main Input Container */}
+      {/* UNCONTROLLED INPUT CONTAINER */}
       <div style={{
         position: 'relative',
         width: '100%',
@@ -255,14 +241,14 @@ const EezLegalApp = () => {
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
         minHeight: '60px'
       }}>
+        {/* UNCONTROLLED INPUT - NO REACT STATE */}
         <input
           ref={inputRef}
           type="text"
           placeholder={placeholder}
-          value={inputValue}
-          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           autoComplete="off"
+          defaultValue=""
           style={{
             flex: 1,
             border: 'none',
@@ -275,11 +261,10 @@ const EezLegalApp = () => {
         />
         <button
           onClick={handleSendMessage}
-          disabled={!inputValue.trim()}
           style={{
             position: 'absolute',
             right: '8px',
-            background: inputValue.trim() ? '#000000' : '#9ca3af',
+            background: '#000000',
             color: '#ffffff',
             border: 'none',
             borderRadius: '50%',
@@ -288,7 +273,7 @@ const EezLegalApp = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            cursor: inputValue.trim() ? 'pointer' : 'not-allowed',
+            cursor: 'pointer',
             transition: 'all 0.2s ease'
           }}
         >
@@ -296,7 +281,7 @@ const EezLegalApp = () => {
         </button>
       </div>
       
-      {/* Attach Button - Far Left Underneath */}
+      {/* Attach Button */}
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         <button 
           onClick={handleFileAttach}
@@ -434,12 +419,12 @@ const EezLegalApp = () => {
           Eezlegal
         </h1>
 
-        <FigmaComposer placeholder="Tell us your legal problem..." />
+        <UncontrolledComposer placeholder="Tell us your legal problem..." />
       </main>
     </div>
   );
 
-  // Authentication Modal - REAL OAUTH WITH CREDENTIALS
+  // Authentication Modal
   const AuthModal = () => {
     const [email, setEmail] = useState('');
 
@@ -779,7 +764,7 @@ const EezLegalApp = () => {
             }}>
               How can we help?
             </h1>
-            <FigmaComposer placeholder="Type your message..." />
+            <UncontrolledComposer placeholder="Type your message..." />
           </>
         ) : (
           <div style={{ width: '100%', maxWidth: '800px' }}>
@@ -813,7 +798,7 @@ const EezLegalApp = () => {
               </div>
             ))}
             <div style={{ marginTop: '2rem' }}>
-              <FigmaComposer placeholder="Type your message..." />
+              <UncontrolledComposer placeholder="Type your message..." />
             </div>
           </div>
         )}
