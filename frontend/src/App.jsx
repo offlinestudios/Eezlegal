@@ -70,8 +70,11 @@ const EezLegalApp = () => {
       });
     }, 1000);
 
-    // Note: User must be logged in to see responses in dashboard
-    // Messages are sent but responses only visible after login
+    // Auto-transition to chat view after first message (simplified UX)
+    if (!isLoggedIn && messages.length === 0) {
+      console.log('First message sent - transitioning to chat view');
+      setIsLoggedIn(true);
+    }
   };
 
   // Enhanced keyboard handler - supports both Enter and Cmd/Ctrl+Enter
