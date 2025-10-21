@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Shield, Send, Paperclip, Menu, X, Settings, User, LogOut, Upload } from 'lucide-react';
 import ModalBase from './components/modals/ModalBase';
 
 const EezLegalApp = () => {
-  // COMPLETELY UNCONTROLLED INPUT APPROACH
+  // UNCONTROLLED INPUT WITH PROPER EVENT HANDLING
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
   
@@ -22,11 +22,18 @@ const EezLegalApp = () => {
   const [currentTheme, setCurrentTheme] = useState('Light');
   const [currentLanguage, setCurrentLanguage] = useState('Auto-detect');
 
-  // SIMPLE UNCONTROLLED INPUT HANDLERS
+  // FIXED SEND MESSAGE HANDLER
   const handleSendMessage = () => {
+    console.log('handleSendMessage called'); // Debug log
+    
     // Get value directly from DOM - NO REACT STATE
-    const messageText = inputRef.current?.value || '';
-    if (!messageText.trim()) return;
+    const messageText = inputRef.current?.value?.trim() || '';
+    console.log('Message text from input:', messageText); // Debug log
+    
+    if (!messageText) {
+      console.log('No message text, aborting send'); // Debug log
+      return;
+    }
     
     console.log('Sending message:', messageText); // Debug log
     
@@ -49,11 +56,13 @@ const EezLegalApp = () => {
     // Clear input directly in DOM - NO REACT STATE
     if (inputRef.current) {
       inputRef.current.value = '';
+      console.log('Input cleared'); // Debug log
     }
     setAttachedFiles([]);
     
     // Simulate AI response
     setTimeout(() => {
+      console.log('Generating AI response'); // Debug log
       const aiResponse = {
         id: Date.now() + 1,
         text: "I understand you need legal assistance. To provide you with the most accurate guidance, could you please provide more specific details about your legal situation? For example:\n\n• What type of legal issue are you facing?\n• What jurisdiction or location does this concern?\n• Are there any urgent deadlines or time-sensitive matters?\n\nThis information will help me provide more targeted legal guidance for your specific situation.",
@@ -73,6 +82,7 @@ const EezLegalApp = () => {
 
   // FILE ATTACHMENT FUNCTIONALITY
   const handleFileAttach = () => {
+    console.log('handleFileAttach called'); // Debug log
     fileInputRef.current?.click();
   };
 
@@ -181,7 +191,7 @@ const EezLegalApp = () => {
     setShowUserMenu(false);
   };
 
-  // COMPLETELY UNCONTROLLED COMPOSER COMPONENT
+  // FIXED UNCONTROLLED COMPOSER COMPONENT
   const UncontrolledComposer = ({ placeholder }) => (
     <div style={{
       display: 'flex',
@@ -228,7 +238,7 @@ const EezLegalApp = () => {
         </div>
       )}
 
-      {/* UNCONTROLLED INPUT CONTAINER */}
+      {/* FIXED INPUT CONTAINER WITH PROPER EVENT HANDLERS */}
       <div style={{
         position: 'relative',
         width: '100%',
@@ -241,7 +251,7 @@ const EezLegalApp = () => {
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
         minHeight: '60px'
       }}>
-        {/* UNCONTROLLED INPUT - NO REACT STATE */}
+        {/* UNCONTROLLED INPUT WITH PROPER EVENT BINDING */}
         <input
           ref={inputRef}
           type="text"
@@ -259,8 +269,15 @@ const EezLegalApp = () => {
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
           }}
         />
+        {/* FIXED SEND BUTTON WITH PROPER ONCLICK */}
         <button
-          onClick={handleSendMessage}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Send button clicked!'); // Debug log
+            handleSendMessage();
+          }}
+          type="button"
           style={{
             position: 'absolute',
             right: '8px',
@@ -284,7 +301,13 @@ const EezLegalApp = () => {
       {/* Attach Button */}
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         <button 
-          onClick={handleFileAttach}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Attach button clicked!'); // Debug log
+            handleFileAttach();
+          }}
+          type="button"
           style={{
             background: 'transparent',
             color: '#6b7280',
