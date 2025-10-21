@@ -70,16 +70,17 @@ const EezLegalApp = () => {
       });
     }, 1000);
 
-    // Auto-login user if not logged in (for demo purposes)
-    if (!isLoggedIn) {
-      console.log('Auto-logging in user...');
-      setIsLoggedIn(true);
-    }
+    // Note: User must be logged in to see responses in dashboard
+    // Messages are sent but responses only visible after login
   };
 
-  // Simple keyboard handler
+  // Enhanced keyboard handler - supports both Enter and Cmd/Ctrl+Enter
   const handleKeyDown = (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      console.log('Enter key pressed - sending message');
+      handleSendMessage();
+    } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
       console.log('Keyboard shortcut triggered');
       handleSendMessage();
